@@ -11,3 +11,7 @@ export interface User {
   active: number;
   created_at?: Date;
 }
+
+export interface Token{
+  token: string;
+}

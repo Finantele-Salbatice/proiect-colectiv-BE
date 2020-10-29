@@ -11,4 +11,10 @@ export class UserController {
   async find(@Body() body: LoginRequest): Promise<User> {
     return this.service.findUserByEmail(body.username);
   }
+
+  @Post('/login')
+  async login(@Body() body: LoginRequest): Promise<User> {
+    return this.service.findUserByUsernameAndPassword(body.username, body.password);
+  }
+
 }

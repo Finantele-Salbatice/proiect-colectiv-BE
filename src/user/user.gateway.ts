@@ -10,7 +10,7 @@ export class UserGateway extends Database {
     this.table = 'users';
   }
 
-  async findByUsername(username: string): Promise<any> {
+  findByUsername(username: string): Promise<any> {
     const sql = `
     SELECT * from ${this.table}
     WHERE email = ?;
@@ -19,6 +19,17 @@ export class UserGateway extends Database {
     return this.query({
       sql,
       values: [username]
+    });
+  }
+  findByUsernameAndPassword(username: string, password: string): Promise<any> {
+    const sql = `
+    SELECT * from ${this.table}
+    WHERE email = ? and password = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [username, password]
     });
   }
     
