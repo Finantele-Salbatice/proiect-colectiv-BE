@@ -1,12 +1,13 @@
 
 import { Database } from '../system/database';
 import { Injectable } from '@nestjs/common';
+import { ConfigProvider } from 'src/system/ConfigProvider';
 
 @Injectable()
 export class UserGateway extends Database {
   table: string;
-  constructor() {
-    super();
+  constructor(configProvider: ConfigProvider) {
+    super(configProvider);
     this.table = 'users';
   }
 

@@ -1,6 +1,7 @@
 import {createPool, Pool, PoolConnection, QueryOptions} from 'mysql';
 import { IConfig } from './Config';
 import { Injectable } from '@nestjs/common';
+import { ConfigProvider } from './ConfigProvider';
 
 const dbConfig = (env: IConfig) => ({
   host: env.DB_HOST,
@@ -18,9 +19,8 @@ const dbConfig = (env: IConfig) => ({
 @Injectable()
 export class Database {
   connection: Pool;
-  constructor() {
-    const config = process.env as unknown as IConfig;
-    this.connection = createPool(dbConfig(config));
+  constructor(private configProvider: ConfigProvider) {
+    this.connection = createPool(dbConfig(this.configProvider.getConfig()));
   }
 
   async getConnection(): Promise<PoolConnection> {
