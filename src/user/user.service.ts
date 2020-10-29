@@ -15,4 +15,14 @@ export class UserService {
 
     return result;
   }
+
+  async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
+    const [result] = await this.gateway.findByUsernameAndPassword(email, password); 
+    if (!result) {
+      throw new NotFoundException('Invalid username or password');
+    }
+
+    return result;
+  }
+
 }
