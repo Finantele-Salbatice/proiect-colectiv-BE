@@ -3,6 +3,8 @@ import { Database } from '../system/database';
 import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 
+//doar functiile care comunica cu baza de date
+
 @Injectable()
 export class UserGateway extends Database {
   table: string;

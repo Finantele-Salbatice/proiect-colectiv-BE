@@ -3,6 +3,7 @@ import { LoginRequest } from 'src/requests/LoginRequest';
 import { User } from './User';
 import { UserService } from './user.service';
 
+
 @Controller()
 export class UserController {
   constructor(private readonly service: UserService) {}
@@ -13,8 +14,9 @@ export class UserController {
   }
 
   @Post('/login')
-  async login(@Body() body: LoginRequest): Promise<User> {
-    return this.service.findUserByUsernameAndPassword(body.username, body.password);
+  async login(@Body() body: LoginRequest): Promise<User> {    
+    return this.service.login(body.username, body.password);
   }
 
 }
+

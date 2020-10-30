@@ -22,8 +22,8 @@ export class UserService {
   }
 
   createHashedPassword(password: string) {
-    const salt = crypto.randomBytes(16).toString("hex");
-    const key = crypto.scryptSync(password, salt, 32);
+    const salt = crypto.randomBytes(32).toString("hex");
+    const key = crypto.scryptSync(password, salt, 64);
     const newPassword = key.toString('hex');
     return {
       key: newPassword,
@@ -32,7 +32,7 @@ export class UserService {
   }
 
   hashPassword(salt: string, password: string): string {
-    const key = crypto.scryptSync(password, salt, 32);
+    const key = crypto.scryptSync(password, salt, 64);
     return key.toString('hex');
   }
 
@@ -47,4 +47,25 @@ export class UserService {
     return result;
   }
 
+  async login(email: string, password: string): Promise<User>  {
+    const [user] = await this.gateway.findByUsername(email);
+    if (!user) {
+      throw new NotFoundException('Invalid username');
+    }
+    const pswd = this.hashPassword(user.salt, password)
+
+    const [result] = await this.gateway.findByUsernameAndPassword(email, pswd); 
+    if (!result) {
+      throw new NotFoundException('Invalid username or password');
+    }
+
+    return this.getUserToken(result);
+  }
+
+  async getUserToken(user: User){
+    var jwt = require('jsonwebtoken');
+    return jwt.sign({ userid : user.id}, this.secret);
+  }
+
 }
+
