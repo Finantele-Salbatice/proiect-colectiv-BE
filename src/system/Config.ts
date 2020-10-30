@@ -10,4 +10,5 @@ export interface IConfig {
   DB_CONNECTION_TIMEOUT: number;
   DB_ACQUIRE_TIMEOUT: number;
   DB_MULTIPLE_STATEMENTS: boolean;
+  SECRET_KEY: string;
 }
