@@ -5,6 +5,7 @@ import {config} from 'dotenv';
 async function bootstrap() {
   config(); // load .env in process.env
   const app = await NestFactory.create(AppModule);
+  app.enableCors();
   await app.listen(3000);
 }
 bootstrap();
