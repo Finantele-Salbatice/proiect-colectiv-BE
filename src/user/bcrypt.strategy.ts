@@ -1,17 +1,16 @@
-import { Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
+//import { Strategy } from 'passport-jwt';
+//import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UserService } from './user.service';
 
 const bcrypt = require('bcrypt');
 const saltRounds = 12;
 
-@Injectable()
-export class BcryptStrategy extends PassportStrategy(Strategy) {
+@Injectable()//inainte avea aici un extend care nu il foloseam
+export class BcryptStrategy {
     
-  constructor() {
-    super();
-  }
+  //constructor() {
+    //super();
+  //}/
   async encryptPassord(password:string): Promise<any>{
     const salt=this.generateSalt(password);
     const hash=this.generateHash(password,salt);  // Store hash in your password DB.
