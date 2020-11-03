@@ -38,10 +38,8 @@ export class UserService {
   }
 
   async registerUser(first_name: string, last_name: string, username: string, password: string){
-    const hash=this.bcryptStrategy.encryptPassord(password);
-    this.gateway.addUserInDB(first_name,last_name,username,hash);
-    
-    
+    const pass=this.createHashedPassword(password);
+    this.gateway.addUserInDB(first_name,last_name,username,pass.salt,pass.key);
   }
 
   async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
