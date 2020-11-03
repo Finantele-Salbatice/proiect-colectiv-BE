@@ -10,15 +10,15 @@ export class UserGateway extends Database {
     super(configProvider);
     this.table = 'users';
   }
-  addUserInDB(first_name: string, last_name: string, username: string, hash): Promise<any> {
+  addUserInDB(first_name: string, last_name: string, username: string, salt: string, hash:string ): Promise<any> {
     const sql = `
     INSERT INTO ${this.table}
-    VALUES (?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ?);
     `;
 
     return this.query({
       sql,
-      values: [username]
+      values: [first_name, last_name, username, salt, hash]
     });
   }
   findByUsername(username: string): Promise<any> {
