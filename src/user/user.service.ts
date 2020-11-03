@@ -3,11 +3,11 @@ import { User } from "./User";
 import { UserGateway } from "./user.gateway";
 import * as crypto from "crypto";
 import { ConfigProvider } from "src/system/ConfigProvider";
-import { BcryptStrategy } from './bcrypt.strategy';
+import {sign} from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
-  constructor(private gateway: UserGateway, private configProvider: ConfigProvider, private bcryptStrategy: BcryptStrategy) {}
+  constructor(private gateway: UserGateway, private configProvider: ConfigProvider) {}
 
   get secret() {
     return this.configProvider.getConfig().SECRET_KEY;
@@ -23,8 +23,8 @@ export class UserService {
   }
 
   createHashedPassword(password: string) {
-    const salt = crypto.randomBytes(16).toString("hex");
-    const key = crypto.scryptSync(password, salt, 32);
+    const salt = crypto.randomBytes(32).toString("hex");
+    const key = crypto.scryptSync(password, salt, 64);
     const newPassword = key.toString('hex');
     return {
       key: newPassword,
@@ -33,7 +33,7 @@ export class UserService {
   }
 
   hashPassword(salt: string, password: string): string {
-    const key = crypto.scryptSync(password, salt, 32);
+    const key = crypto.scryptSync(password, salt, 64);
     return key.toString('hex');
   }
 
@@ -43,8 +43,6 @@ export class UserService {
   }
 
   async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
-    const hashedPass = this.createHashedPassword(password);
-    console.log(hashedPass);
     const [result] = await this.gateway.findByUsernameAndPassword(email, password); 
     if (!result) {
       throw new NotFoundException('Invalid username or password');
@@ -53,4 +51,16 @@ export class UserService {
     return result;
   }
 
+  async login(email: string, password: string): Promise<string>  {
+    const user = await this.findUserByEmail(email);
+    const pswd = this.hashPassword(user.salt, password)
+    const result = await this.findUserByUsernameAndPassword(email, pswd);
+    return this.getUserToken(result);
+  }
+
+  getUserToken(user: User): string {
+    return sign({ userId : user.id}, this.secret);
+  }
+
 }
+
