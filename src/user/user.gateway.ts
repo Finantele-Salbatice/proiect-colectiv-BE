@@ -2,6 +2,7 @@
 import { Database } from '../system/database';
 import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
+import { User } from './User';
 
 //doar functiile care comunica cu baza de date
 
@@ -12,15 +13,14 @@ export class UserGateway extends Database {
     super(configProvider);
     this.table = 'users';
   }
-  addUserInDB(first_name: string, last_name: string, username: string, salt: string, hash:string ): Promise<any> {
+  addUserInDB(user: User): Promise<any> {
     const sql = `
-    INSERT INTO ${this.table}
-    VALUES (?, ?, ?, ?, ?);
+    INSERT INTO ${this.table} set ?;
     `;
 
     return this.query({
       sql,
-      values: [first_name, last_name, username, salt, hash]
+      values: [user]
     });
   }
   findByUsername(username: string): Promise<any> {

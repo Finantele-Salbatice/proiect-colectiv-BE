@@ -2,12 +2,12 @@
 
 
 export interface User {
-  id: number;
+  id?: number;
   first_name: string;
   last_name: string;
   email: string;
   salt: string;
-  passowrd: string;
+  password: string;
   active: number;
   created_at?: Date;
 }
