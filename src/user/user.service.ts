@@ -37,6 +37,22 @@ export class UserService {
     return key.toString('hex');
   }
 
+  async registerUser(first_name: string, last_name: string, username: string, password: string){
+    const pass=this.createHashedPassword(password);
+    const user:User={
+      first_name,
+      last_name,
+      active:1,
+      email: username,
+      password:pass.key,
+      salt:pass.salt,
+    }
+    const result= await this.gateway.addUserInDB(user);
+    return {
+      ok:true
+    }
+  }
+
   async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
     const [result] = await this.gateway.findByUsernameAndPassword(email, password); 
     if (!result) {
