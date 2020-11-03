@@ -3,6 +3,7 @@ import { User } from "./User";
 import { UserGateway } from "./user.gateway";
 import * as crypto from "crypto";
 import { ConfigProvider } from "src/system/ConfigProvider";
+import {sign} from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
@@ -37,8 +38,6 @@ export class UserService {
   }
 
   async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
-    const hashedPass = this.createHashedPassword(password);
-    console.log(hashedPass);
     const [result] = await this.gateway.findByUsernameAndPassword(email, password); 
     if (!result) {
       throw new NotFoundException('Invalid username or password');
@@ -47,24 +46,15 @@ export class UserService {
     return result;
   }
 
-  async login(email: string, password: string): Promise<User>  {
-    const [user] = await this.gateway.findByUsername(email);
-    if (!user) {
-      throw new NotFoundException('Invalid username');
-    }
+  async login(email: string, password: string): Promise<string>  {
+    const user = await this.findUserByEmail(email);
     const pswd = this.hashPassword(user.salt, password)
-
-    const [result] = await this.gateway.findByUsernameAndPassword(email, pswd); 
-    if (!result) {
-      throw new NotFoundException('Invalid username or password');
-    }
-
+    const result = await this.findUserByUsernameAndPassword(email, pswd);
     return this.getUserToken(result);
   }
 
-  async getUserToken(user: User){
-    var jwt = require('jsonwebtoken');
-    return jwt.sign({ userid : user.id}, this.secret);
+  getUserToken(user: User): string {
+    return sign({ userId : user.id}, this.secret);
   }
 
 }
