@@ -37,13 +37,13 @@ export class UserService {
     return key.toString('hex');
   }
 
-  async registerUser(first_name: string, last_name: string, username: string, password: string){
+  async registerUser(first_name: string, last_name: string, email: string, password: string){
     const pass=this.createHashedPassword(password);
     const user:User={
       first_name,
       last_name,
       active:1,
-      email: username,
+      email,
       password:pass.key,
       salt:pass.salt,
     }

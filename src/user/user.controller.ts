@@ -9,19 +9,15 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly service: UserService) {}
 
-  @Post('/find')
-  async find(@Body() body: LoginRequest): Promise<User> {
-    return this.service.findUserByEmail(body.username);
-  }
 
   @Post('/login')
   async login(@Body() body: LoginRequest): Promise<string> {    
-    return this.service.login(body.username, body.password);
+    return this.service.login(body.email, body.password);
   }
 
   @Post('/register')
   async register(@Body() body: RegisterRequest): Promise<any>{
-    return this.service.registerUser(body.first_name,body.last_name,body.username,body.password);
+    return this.service.registerUser(body.first_name,body.last_name,body.email,body.password);
   }
 
 }
