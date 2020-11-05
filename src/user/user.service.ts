@@ -37,6 +37,13 @@ export class UserService {
     return key.toString('hex');
   }
 
+  async validateUser(user: User){
+    const [result] = await this.gateway.findByUsername(user.email);
+    if (result) {
+      throw new Error('There is already an account with this email');
+    }
+  }
+
   async registerUser(first_name: string, last_name: string, email: string, password: string){
     const pass=this.createHashedPassword(password);
     const user:User={
@@ -47,6 +54,8 @@ export class UserService {
       password:pass.key,
       salt:pass.salt,
     }
+    //validate email
+    await this.validateUser(user);
     const result= await this.gateway.addUserInDB(user);
     return {
       ok:true
