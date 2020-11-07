@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { IConfig } from "./Config";
+import { Injectable } from '@nestjs/common';
+import { IConfig } from './Config';
 
 import {config} from 'dotenv';
 

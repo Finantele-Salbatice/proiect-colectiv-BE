@@ -9,8 +9,8 @@ export interface Token {
   }
 
   
-  export enum TokenType{
-      reset = "reset"
+export enum TokenType{
+      reset = 'reset'
   }
   
  

@@ -1,9 +1,9 @@
-import {createPool, Pool, PoolConnection, QueryOptions} from 'mysql';
+import {createPool, Pool, PoolConfig, PoolConnection, QueryOptions} from 'mysql';
 import { IConfig } from './Config';
 import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from './ConfigProvider';
 
-const dbConfig = (env: IConfig) => ({
+const dbConfig = (env: IConfig): PoolConfig => ({
   host: env.DB_HOST,
   port: +env.DB_PORT,
   user: env.DB_USER,
