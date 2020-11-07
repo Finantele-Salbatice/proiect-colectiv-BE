@@ -9,7 +9,7 @@ import {sign} from 'jsonwebtoken';
 export class UserService {
   constructor(private gateway: UserGateway, private configProvider: ConfigProvider) {}
 
-  get secret() {
+  get secret(): string {
     return this.configProvider.getConfig().SECRET_KEY;
   }
 
@@ -22,7 +22,7 @@ export class UserService {
     return result;
   }
 
-  createHashedPassword(password: string) {
+  createHashedPassword(password: string): any {
     const salt = crypto.randomBytes(32).toString("hex");
     const key = crypto.scryptSync(password, salt, 64);
     const newPassword = key.toString('hex');
@@ -37,11 +37,11 @@ export class UserService {
     return key.toString('hex');
   }
 
-  async registerUser(first_name: string, last_name: string, email: string, password: string){
+  async registerUser(firstName: string, lastName: string, email: string, password: string): Promise<any> {
     const pass=this.createHashedPassword(password);
     const user:User={
-      first_name,
-      last_name,
+      first_name: firstName,
+      last_name: lastName,
       active:1,
       email,
       password:pass.key,

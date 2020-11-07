@@ -1,8 +1,6 @@
-//import { Strategy } from 'passport-jwt';
-//import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
-const bcrypt = require('bcrypt');
+import {genSaltSync, hashSync, compareSync} from 'bcrypt';
 const saltRounds = 12;
 
 @Injectable()//inainte avea aici un extend care nu il foloseam
@@ -11,22 +9,22 @@ export class BcryptStrategy {
   //constructor() {
     //super();
   //}/
-  async encryptPassord(password:string): Promise<any>{
-    const salt=this.generateSalt(password);
+  async encryptPassord(password:string): Promise<any> {
+    const salt=this.generateSalt();
     const hash=this.generateHash(password,salt);  // Store hash in your password DB.
     return hash;
   }
-  async decryptAndCheckPassword(password:string, hash){
+  decryptAndCheckPassword(password:string, hash: string): boolean {
     // hash- e parola salvata in db, password-parola ce se verifica
     //return true if hash is the hash of the password
-    return bcrypt.compareSync(password, hash); // true
+    return compareSync(password, hash); // true
   } 
-  async generateSalt(pass: String){
-    const salt = bcrypt.genSaltSync(saltRounds);
+  generateSalt(): string {
+    const salt = genSaltSync(saltRounds);
     return salt;
   }
-  async generateHash(pass: String, salt){
-    const hashedPass = bcrypt.hashSync(pass, salt); // genereaza salt si face hash dupa parola 
+  generateHash(pass: string, salt: string): string {
+    const hashedPass = hashSync(pass, salt); // genereaza salt si face hash dupa parola 
     return hashedPass;
   }
 }

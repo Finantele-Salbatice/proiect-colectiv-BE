@@ -1,7 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { LoginRequest } from 'src/requests/LoginRequest';
 import { RegisterRequest } from 'src/requests/RegisterRequest';
-import { User } from './User';
 import { UserService } from './user.service';
 
 
@@ -16,9 +15,8 @@ export class UserController {
   }
 
   @Post('/register')
-  async register(@Body() body: RegisterRequest): Promise<any>{
+  async register(@Body() body: RegisterRequest): Promise<any> {
     return this.service.registerUser(body.first_name,body.last_name,body.email,body.password);
   }
-
 }
 
