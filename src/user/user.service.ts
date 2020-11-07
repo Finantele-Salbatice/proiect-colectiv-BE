@@ -1,17 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from './User';
+import { User } from 'src/user/models/User';
 import { UserGateway } from './user.gateway';
 import * as crypto from 'crypto';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { sign } from 'jsonwebtoken';
+import { v4 as uuidv4 } from 'uuid';
+import { Token, TokenType } from 'src/user/models/Token';
+import { MailerService } from 'src/mailer/mailer.service';
+
+
 
 @Injectable()
 export class UserService {
-  constructor(private gateway: UserGateway, private configProvider: ConfigProvider) {}
+  constructor(private gateway: UserGateway, private configProvider: ConfigProvider, private mailer: MailerService) {}
 
   get secret(): string {
     return this.configProvider.getConfig().SECRET_KEY;
   }
+
 
   async findUserByEmail(email: string): Promise<User>  {
     const [result] = await this.gateway.findByUsername(email);
@@ -80,6 +86,32 @@ export class UserService {
 
   getUserToken(user: User): string {
     return sign({ userId : user.id}, this.secret);
+  }
+
+  
+
+  async resetPasswd(email: string): Promise<any> {
+    const t = uuidv4();
+    try{
+      const user = await this.findUserByEmail(email);
+
+      const token:Token = { 
+        user_id : user.id,
+        token : t,
+        active : 1,
+        type : TokenType.reset,
+      }
+      const result= await this.gateway.addTokenInDB(token);
+      await this.mailer.sendResetEmail(t, user.email);
+
+    }
+    catch(err) {console.log(err);}
+    
+    
+
+    return {
+      ok:true
+    }
   }
 
 }
