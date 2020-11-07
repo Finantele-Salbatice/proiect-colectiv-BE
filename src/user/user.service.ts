@@ -3,7 +3,7 @@ import { User } from "./User";
 import { UserGateway } from "./user.gateway";
 import * as crypto from "crypto";
 import { ConfigProvider } from "src/system/ConfigProvider";
-import {sign} from 'jsonwebtoken';
+import { sign } from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
