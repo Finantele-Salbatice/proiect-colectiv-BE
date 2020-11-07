@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { User } from "./User";
-import { UserGateway } from "./user.gateway";
-import * as crypto from "crypto";
-import { ConfigProvider } from "src/system/ConfigProvider";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { User } from './User';
+import { UserGateway } from './user.gateway';
+import * as crypto from 'crypto';
+import { ConfigProvider } from 'src/system/ConfigProvider';
 import { sign } from 'jsonwebtoken';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class UserService {
   }
 
   createHashedPassword(password: string): any {
-    const salt = crypto.randomBytes(32).toString("hex");
+    const salt = crypto.randomBytes(32).toString('hex');
     const key = crypto.scryptSync(password, salt, 64);
     const newPassword = key.toString('hex');
     return {

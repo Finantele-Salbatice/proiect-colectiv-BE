@@ -28,5 +28,7 @@ module.exports = {
       }
     ],
     'space-before-blocks': 'error',
+    'indent': ['error', 2],
+    'quotes': ['error', 'single']
   },
 };

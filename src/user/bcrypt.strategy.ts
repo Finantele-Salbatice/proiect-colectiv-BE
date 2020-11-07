@@ -7,7 +7,7 @@ const saltRounds = 12;
 export class BcryptStrategy {
     
   //constructor() {
-    //super();
+  //super();
   //}/
   async encryptPassord(password:string): Promise<any> {
     const salt=this.generateSalt();
