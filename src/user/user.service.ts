@@ -1,15 +1,15 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { User } from "./User";
-import { UserGateway } from "./user.gateway";
-import * as crypto from "crypto";
-import { ConfigProvider } from "src/system/ConfigProvider";
-import {sign} from 'jsonwebtoken';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { User } from './User';
+import { UserGateway } from './user.gateway';
+import * as crypto from 'crypto';
+import { ConfigProvider } from 'src/system/ConfigProvider';
+import { sign } from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
   constructor(private gateway: UserGateway, private configProvider: ConfigProvider) {}
 
-  get secret() {
+  get secret(): string {
     return this.configProvider.getConfig().SECRET_KEY;
   }
 
@@ -22,8 +22,8 @@ export class UserService {
     return result;
   }
 
-  createHashedPassword(password: string) {
-    const salt = crypto.randomBytes(32).toString("hex");
+  createHashedPassword(password: string): any {
+    const salt = crypto.randomBytes(32).toString('hex');
     const key = crypto.scryptSync(password, salt, 64);
     const newPassword = key.toString('hex');
     return {
@@ -37,18 +37,18 @@ export class UserService {
     return key.toString('hex');
   }
 
-  async validateUser(user: User){
+  async validateUser(user: User): Promise<void> {
     const [result] = await this.gateway.findByUsername(user.email);
     if (result) {
       throw new Error('There is already an account with this email');
     }
   }
 
-  async registerUser(first_name: string, last_name: string, email: string, password: string){
+  async registerUser(firstName: string, lastName: string, email: string, password: string): Promise<any> {
     const pass=this.createHashedPassword(password);
     const user:User={
-      first_name,
-      last_name,
+      first_name: firstName,
+      last_name: lastName,
       active:1,
       email,
       password:pass.key,
