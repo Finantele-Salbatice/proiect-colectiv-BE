@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { IConfig } from './Config';
 
-import {config} from 'dotenv';
-
 @Injectable()
 export class ConfigProvider {
   config: IConfig;
   constructor() {
-    config();
     this.config = process.env as any as IConfig;
   }
 

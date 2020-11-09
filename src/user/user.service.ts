@@ -12,7 +12,8 @@ import { MailerService } from 'src/mailer/mailer.service';
 
 @Injectable()
 export class UserService {
-  constructor(private gateway: UserGateway, private configProvider: ConfigProvider, private mailer: MailerService) {}
+  constructor(private gateway: UserGateway, private configProvider: ConfigProvider, private mailer: MailerService) {
+  }
 
   get secret(): string {
     return this.configProvider.getConfig().SECRET_KEY;
@@ -107,8 +108,6 @@ export class UserService {
     }
     catch(err) {console.log(err);}
     
-    
-
     return {
       ok:true
     }
