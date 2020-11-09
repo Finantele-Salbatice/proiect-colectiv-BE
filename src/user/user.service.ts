@@ -112,12 +112,32 @@ export class UserService {
         active : 1,
         type : TokenType.reset,
       }
-      const result= await this.gateway.addTokenInDB(token);
+      await this.gateway.addTokenInDB(token);
       await this.mailer.sendResetEmail(t, user.email);
 
     }
     catch(err) {console.log(err);}
     
+    return {
+      ok:true
+    }
+  }
+
+  async activateUser(token: string): Promise<any> {
+    try{
+      const result = await this.gateway.findTokenByToken(token);
+      console.log('Am ajuns aici!');
+      console.log(result);
+      console.log(result.active);
+      console.log(result.type);
+      if(result.active == '1' && result.type == 'activate') {
+        await this.gateway.updateToken(token);
+        await this.gateway.updateUserActivation(result.user_id);
+        console.log('Am ajuns si aici!');
+      }
+
+    }catch(err) {console.log(err);}
+
     return {
       ok:true
     }

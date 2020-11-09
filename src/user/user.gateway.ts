@@ -49,6 +49,18 @@ export class UserGateway extends Database {
     });
   }
 
+  findTokenByToken(t: string): Promise<any> {
+    const sql = `
+    SELECT * from ${this.token}
+    WHERE token = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [t]
+    });
+  }
+
 
   addTokenInDB(t: Token): Promise<any> {
     const sql = `
@@ -58,6 +70,28 @@ export class UserGateway extends Database {
     return this.query({
       sql,
       values: [t]
+    });
+  }
+
+  updateToken(t: string): Promise<any> {
+    const sql = `
+    UPDATE ${this.token} set active = 0 WHERE token = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [t]
+    });
+  }
+  
+  updateUserActivation(id: string): Promise<any> {
+    const sql = `
+    UPDATE ${this.table} set active = 1 WHERE id = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [id]
     });
   }
     

@@ -1,5 +1,6 @@
 import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { ActivateAccountRequest } from 'src/requests/ActivateAccountRequest';
 import { LoginRequest } from 'src/requests/LoginRequest';
 import { RegisterRequest } from 'src/requests/RegisterRequest';
 import { ResetRequest } from 'src/requests/ResetRequest';
@@ -35,7 +36,7 @@ export class UserController {
   }
 
   @Post('/activate')
-  async activate(@Body() body: RegisterRequest): Promise<any> {
-    return this.service.registerUser(body.first_name,body.last_name,body.email,body.password);
+  async activate(@Body() body: ActivateAccountRequest): Promise<any> {
+    return this.service.activateUser(body.token);
   }
 }
