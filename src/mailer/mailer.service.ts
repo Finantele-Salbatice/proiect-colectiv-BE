@@ -13,7 +13,7 @@ export class MailerService {
         secure: false, // true for 465, false for other ports
         auth: {
           user: 'finantelesalbatice@gmail.com', 
-          pass: this.emailPassword, 
+          pass: process.env.EMAIL_PASSWORD,
         },
       });
     }
