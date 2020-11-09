@@ -56,7 +56,7 @@ export class UserService {
     const user:User={
       first_name: firstName,
       last_name: lastName,
-      active:1,
+      active:0,
       email,
       password:pass.key,
       salt:pass.salt,
@@ -64,6 +64,16 @@ export class UserService {
     //validate email
     await this.validateUser(user);
     const result= await this.gateway.addUserInDB(user);
+    const t = uuidv4();
+    const token:Token = { 
+      user_id : result.insertId,
+      token : t,
+      active : 1,
+      type : TokenType.activate,
+    }
+    
+    await this.gateway.addTokenInDB(token);
+    await this.mailer.sendActivateAccountEmail(t, user.email);
     return {
       ok:true
     }

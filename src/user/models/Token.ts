@@ -10,7 +10,8 @@ export interface Token {
 
   
 export enum TokenType{
-      reset = 'reset'
+      reset = 'reset',
+      activate = 'activate'
   }
   
  

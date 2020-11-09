@@ -32,10 +32,22 @@ export class MailerService {
       const info = await this.transporter.sendMail({
         from: '"Finantele Salbatice" <finantelesalbatice@gmail.com>', // sender address
         to: email, // list of receivers
-        subject: 'Resetare Parola', // Subject line
+        subject: 'Reset Password', // Subject line
         text: `Click here to reset your password ${this.uiHost}/reset/${t}`,
       });
       return info;
           
-    }
+    } 
+    async sendActivateAccountEmail(t: string, email: string): Promise<any> {
+      const info = await this.transporter.sendMail({
+        from: '"Finantele Salbatice" <finantelesalbatice@gmail.com>', // sender address
+        to: email, // list of receivers
+        subject: 'Activate Account', // Subject line
+        text: `Click here to activate your accont ${this.uiHost}/activate/${t}`,
+      });
+      return info;
+    } 
+   
+    
+
 }
