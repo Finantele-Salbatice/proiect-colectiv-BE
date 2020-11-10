@@ -7,7 +7,6 @@ import { sign } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { Token, TokenType } from 'src/user/models/Token';
 import { MailerService } from 'src/mailer/mailer.service';
-import { json } from 'express';
 
 
 
