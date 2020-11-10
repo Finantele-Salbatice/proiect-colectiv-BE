@@ -26,6 +26,41 @@ export class UserGateway extends Database {
       values: [user]
     });
   }
+  updateUser(user: User,id:number): Promise<any> {
+    const sql = `
+    UPDATE ${this.table}
+    SET ?
+    WHERE id = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [user,id]
+    });
+  }
+  updateToken(token: Token, id:number): Promise<any> {
+    const sql = `
+    UPDATE ${this.token}
+    SET ?
+    WHERE id = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [token,id]
+    });
+  }
+  findById(id: number): Promise<any> {
+    const sql = `
+    SELECT * from ${this.table}
+    WHERE id = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [id]
+    });
+  }
   findByUsername(username: string): Promise<any> {
     const sql = `
     SELECT * from ${this.table}
@@ -58,6 +93,18 @@ export class UserGateway extends Database {
     return this.query({
       sql,
       values: [t]
+    });
+  }
+
+  findRestToken(token: string): Promise<any> {
+    const sql = `
+    SELECT * from ${this.token}
+    WHERE token = ? and active = ? and type = ?;
+    `;
+
+    return this.query({
+      sql,
+      values: [token,1,'reset']
     });
   }
     

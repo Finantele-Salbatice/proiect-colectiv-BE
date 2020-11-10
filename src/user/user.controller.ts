@@ -3,6 +3,7 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { LoginRequest } from 'src/requests/LoginRequest';
 import { RegisterRequest } from 'src/requests/RegisterRequest';
 import { ResetRequest } from 'src/requests/ResetRequest';
+import { UpdatePasswordRequest } from 'src/requests/UpdatePasswordRequest';
 
 import { UserService } from './user.service';
 
@@ -28,6 +29,10 @@ export class UserController {
     return this.service.resetPasswd(body.email);
   }
 
+  @Post('/updatePassword')
+  async updatePassword(@Body() body: UpdatePasswordRequest): Promise<any> {
+    return this.service.updatePassword(body.token,body.password);
+  }
 
   @Post('/register')
   async register(@Body() body: RegisterRequest): Promise<any> {
