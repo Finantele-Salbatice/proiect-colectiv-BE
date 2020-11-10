@@ -7,6 +7,7 @@ import { sign } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { Token, TokenType } from 'src/user/models/Token';
 import { MailerService } from 'src/mailer/mailer.service';
+import { json } from 'express';
 
 
 
@@ -47,7 +48,7 @@ export class UserService {
   async validateUser(user: User): Promise<void> {
     const [result] = await this.gateway.findByUsername(user.email);
     if (result) {
-      throw new Error('There is already an account with this email');
+      throw new NotFoundException('There is already an account with this email');
     }
   }
 
@@ -92,7 +93,12 @@ export class UserService {
     const user = await this.findUserByEmail(email);
     const pswd = this.hashPassword(user.salt, password)
     const result = await this.findUserByUsernameAndPassword(email, pswd);
-    return this.getUserToken(result);
+    if(result.active!=1) {
+      throw new NotFoundException('You need to activate your account')
+    }
+    else{
+      return this.getUserToken(result);
+    }
   }
 
   getUserToken(user: User): string {
@@ -124,24 +130,29 @@ export class UserService {
   }
 
   async activateUser(token: string): Promise<any> {
-    try{
-      const result = await this.gateway.findTokenByToken(token);
-      console.log('Am ajuns aici!');
-      console.log(result);
-      console.log(result.active);
-      console.log(result.type);
-      if(result.active == '1' && result.type == 'activate') {
+    const [result] = await this.gateway.findTokenByToken(token);
+    console.log(result);
+    if(!result) {
+      throw new NotFoundException('Invalid token');
+    }
+    else{
+      if(result.type== 'activate' && result.active == 0) {
+        throw new NotFoundException('Token already used')
+      }
+      else if(result.type == 'activate' && result.active == 1) {
         await this.gateway.updateToken(token);
         await this.gateway.updateUserActivation(result.user_id);
-        console.log('Am ajuns si aici!');
+        return {
+          ok:true
+        }
+        
       }
-
-    }catch(err) {console.log(err);}
-
-    return {
-      ok:true
+      throw new NotFoundException('Invalid token');
     }
   }
 
+
+
 }
+
 
