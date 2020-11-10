@@ -11,4 +11,6 @@ export interface IConfig {
   DB_ACQUIRE_TIMEOUT: number;
   DB_MULTIPLE_STATEMENTS: boolean;
   SECRET_KEY: string;
+  UI_HOST: string;
+  EMAIL_PASSWORD: string;
 }
