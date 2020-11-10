@@ -64,7 +64,7 @@ export class UserGateway extends Database {
 
   addTokenInDB(token: Token): Promise<any> {
     const sql = `
-    INSERT INTO ${this.tokenTable} set ?;
+    INSERT INTO ${this.tokenTable} SET ?;
     `;
 
     return this.query({
@@ -73,14 +73,14 @@ export class UserGateway extends Database {
     });
   }
 
-  updateToken(token: string): Promise<any> {
+  updateToken(token: Token, identifier: string): Promise<any> {
     const sql = `
-    UPDATE ${this.tokenTable} set active = 0 WHERE token = ?;
+    UPDATE ${this.tokenTable} SET ? WHERE token = ?;
     `;
 
     return this.query({
       sql,
-      values: [token]
+      values: [token, identifier]
     });
   }
   

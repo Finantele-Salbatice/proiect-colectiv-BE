@@ -28,22 +28,22 @@ export class MailerService {
       return this.configProvider.getConfig().UI_HOST;
     }
 
-    async sendResetEmail(t: string, email: string): Promise<any> {
+    async sendResetEmail(token: string, email: string): Promise<any> {
       const info = await this.transporter.sendMail({
         from: '"Finantele Salbatice" <finantelesalbatice@gmail.com>', // sender address
         to: email, // list of receivers
         subject: 'Reset Password', // Subject line
-        text: `Click here to reset your password ${this.uiHost}/reset/${t}`,
+        text: `Click here to reset your password ${this.uiHost}/reset/${token}`,
       });
-      return info;
-          
-    } 
-    async sendActivateAccountEmail(t: string, email: string): Promise<any> {
+      return info;        
+    }
+
+    async sendActivateAccountEmail(token: string, email: string): Promise<any> {
       const info = await this.transporter.sendMail({
         from: '"Finantele Salbatice" <finantelesalbatice@gmail.com>', // sender address
         to: email, // list of receivers
         subject: 'Activate Account', // Subject line
-        text: `Click here to activate your accont ${this.uiHost}/activate/${t}`,
+        text: `Click here to activate your accont ${this.uiHost}/activate/${token}`,
       });
       return info;
     } 

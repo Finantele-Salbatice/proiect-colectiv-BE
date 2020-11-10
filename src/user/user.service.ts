@@ -84,27 +84,22 @@ export class UserService {
     if (!result) {
       throw new NotFoundException('Invalid username or password');
     }
-
     return result;
   }
 
   async login(email: string, password: string): Promise<string>  {
     const user = await this.findUserByEmail(email);
-    const pswd = this.hashPassword(user.salt, password)
+    const pswd = this.hashPassword(user.salt, password);
     const result = await this.findUserByUsernameAndPassword(email, pswd);
-    if(result.active!=1) {
-      throw new NotFoundException('You need to activate your account')
+    if(result.active === 0) {
+      throw new NotFoundException('You need to activate your account');
     }
-    else{
-      return this.getUserToken(result);
-    }
+    return this.getUserToken(result);
   }
 
   getUserToken(user: User): string {
     return sign({ userId : user.id}, this.secret);
   }
-
-  
 
   async resetPasswd(email: string): Promise<any> {
     const t = uuidv4();
@@ -124,29 +119,31 @@ export class UserService {
     catch(err) {console.log(err);}
     
     return {
-      ok:true
+      ok: true
     }
   }
 
-  async activateUser(token: string): Promise<any> {
-    const [result] = await this.gateway.findTokenByToken(token);
-    console.log(result);
+  async activateUser(identifier: string): Promise<any> {
+    const [result] = await this.gateway.findTokenByToken(identifier);
     if(!result) {
       throw new NotFoundException('Invalid token');
     }
-    else{
-      if(result.type== 'activate' && result.active == 0) {
-        throw new NotFoundException('Token already used')
-      }
-      else if(result.type == 'activate' && result.active == 1) {
-        await this.gateway.updateToken(token);
-        await this.gateway.updateUserActivation(result.user_id);
-        return {
-          ok:true
-        }
-        
-      }
+
+    if(result.active === 0) {
+      throw new NotFoundException('Token already used')
+    }
+
+    if(result.type !== TokenType.activate) {
       throw new NotFoundException('Invalid token');
+    }
+
+    const token: Token = {
+      active: 0
+    }
+    await this.gateway.updateToken(token, identifier);
+    await this.gateway.updateUserActivation(result.user_id);
+    return {
+      ok: true
     }
   }
 
