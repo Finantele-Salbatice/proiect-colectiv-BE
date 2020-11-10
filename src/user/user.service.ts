@@ -126,14 +126,10 @@ export class UserService {
   async activateUser(token: string): Promise<any> {
     try{
       const result = await this.gateway.findTokenByToken(token);
-      console.log('Am ajuns aici!');
-      console.log(result);
-      console.log(result.active);
-      console.log(result.type);
-      if(result.active == '1' && result.type == 'activate') {
+      if(result[0].active == '1' && result[0].type == 'activate') {
         await this.gateway.updateToken(token);
         await this.gateway.updateUserActivation(result.user_id);
-        console.log('Am ajuns si aici!');
+        
       }
 
     }catch(err) {console.log(err);}

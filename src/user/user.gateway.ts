@@ -9,16 +9,16 @@ import { Token } from './models/Token';
 
 @Injectable()
 export class UserGateway extends Database {
-  table: string;
-  token: string;
+  userTable: string;
+  tokenTable: string;
   constructor(configProvider: ConfigProvider) {
     super(configProvider);
-    this.table = 'users';
-    this.token = 'tokens';
+    this.userTable = 'users';
+    this.tokenTable = 'tokens';
   }
   addUserInDB(user: User): Promise<any> {
     const sql = `
-    INSERT INTO ${this.table} set ?;
+    INSERT INTO ${this.userTable} set ?;
     `;
 
     return this.query({
@@ -28,7 +28,7 @@ export class UserGateway extends Database {
   }
   findByUsername(username: string): Promise<any> {
     const sql = `
-    SELECT * from ${this.table}
+    SELECT * from ${this.userTable}
     WHERE email = ?;
     `;
 
@@ -39,7 +39,7 @@ export class UserGateway extends Database {
   }
   findByUsernameAndPassword(username: string, password: string): Promise<any> {
     const sql = `
-    SELECT * from ${this.table}
+    SELECT * from ${this.userTable}
     WHERE email = ? and password = ?;
     `;
 
@@ -49,44 +49,44 @@ export class UserGateway extends Database {
     });
   }
 
-  findTokenByToken(t: string): Promise<any> {
+  findTokenByToken(token: string): Promise<any> {
     const sql = `
-    SELECT * from ${this.token}
+    SELECT * from ${this.tokenTable}
     WHERE token = ?;
     `;
 
     return this.query({
       sql,
-      values: [t]
+      values: [token]
     });
   }
 
 
-  addTokenInDB(t: Token): Promise<any> {
+  addTokenInDB(token: Token): Promise<any> {
     const sql = `
-    INSERT INTO ${this.token} set ?;
+    INSERT INTO ${this.tokenTable} set ?;
     `;
 
     return this.query({
       sql,
-      values: [t]
+      values: [token]
     });
   }
 
-  updateToken(t: string): Promise<any> {
+  updateToken(token: string): Promise<any> {
     const sql = `
-    UPDATE ${this.token} set active = 0 WHERE token = ?;
+    UPDATE ${this.tokenTable} set active = 0 WHERE token = ?;
     `;
 
     return this.query({
       sql,
-      values: [t]
+      values: [token]
     });
   }
   
   updateUserActivation(id: string): Promise<any> {
     const sql = `
-    UPDATE ${this.table} set active = 1 WHERE id = ?;
+    UPDATE ${this.userTable} set active = 1 WHERE id = ?;
     `;
 
     return this.query({
