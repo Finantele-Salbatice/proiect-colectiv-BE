@@ -4,11 +4,11 @@ import { UserGateway } from './user.gateway';
 import { UserService } from './user.service';
 //import { BcryptStrategy } from './bcrypt.strategy';
 import { AuthModule } from 'src/auth/auth.module';
-//de importat modulul de mailer
+import { MailerModule } from 'src/mailer/mailer.module';
 
 @Module({
 	providers: [UserGateway, UserService],
 	exports: [UserService],
-	imports: [SystemModule, AuthModule],
+	imports: [SystemModule, AuthModule, MailerModule],
 })
 export class UserModule {}

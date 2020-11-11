@@ -7,6 +7,7 @@ import { sign } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { Token, TokenType } from 'src/user/models/Token';
 import { MailerService } from 'src/mailer/mailer.service';
+import validator from 'validator';
 
 @Injectable()
 export class UserService {
@@ -20,6 +21,22 @@ export class UserService {
 		const [result] = await this.gateway.findByUsername(email);
 		if (!result) {
 			throw new NotFoundException('Invalid username or password');
+		}
+
+		return result;
+	}
+	async findUserById(id: number): Promise<User>  {
+		const [result] = await this.gateway.findById(id);
+		if (!result) {
+			throw new NotFoundException('Invalid id!');
+		}
+
+		return result;
+	}
+	async findTokenById(token: string): Promise<Token> {
+		const [result] = await await this.gateway.findResetToken(token);
+		if (!result) {
+			throw new NotFoundException('Active rest token not found!');
 		}
 
 		return result;
@@ -40,6 +57,25 @@ export class UserService {
 		return key.toString('hex');
 	}
 
+	async validateUser(user: User): Promise<void> {
+		const [result] = await this.gateway.findByUsername(user.email);
+		if (result) {
+			throw new Error('There is already an account with this email');
+		}
+		if (result.first_name === '') {
+			throw new Error('First name is empty!');
+		}
+		if (result.last_name === '') {
+			throw new Error('Last name is empty!');
+		}
+		if (result.email === '') {
+			throw new Error('Email is empty!');
+		}
+		if (!validator.isEmail(result.email)) {
+			throw new Error('Bad email format!');
+		}
+	}
+
 	async registerUser(firstName: string, lastName: string, email: string, password: string): Promise<any> {
 		const pass = this.createHashedPassword(password);
 		const user: User = {
@@ -50,6 +86,8 @@ export class UserService {
 			password:pass.key,
 			salt:pass.salt,
 		};
+
+		await this.validateUser(user);
 		await this.gateway.addUserInDB(user);
 		return {
 			ok:true,
@@ -76,6 +114,23 @@ export class UserService {
 		return sign({ userId : user.id }, this.secret);
 	}
 
+	async updatePassword(token: string, password: string): Promise<any> {
+		const t = await this.findTokenById(token);
+		const pass = this.createHashedPassword(password);
+		const updatedUser: User = {
+			password: pass.key,
+			salt: pass.salt,
+		};
+		const updatedToken: Token = {
+			active:0,
+		};
+		await this.gateway.updateToken(updatedToken,t.id);
+		await this.gateway.updateUser(updatedUser,t.user_id);
+
+		return {
+			ok:true,
+		};
+	}
 	async resetPasswd(email: string): Promise<any> {
 		const t = uuidv4();
 		try {

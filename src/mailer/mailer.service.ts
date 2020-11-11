@@ -1,7 +1,9 @@
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { createTransport } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class MailerService {
 		transporter: Mail;
 
@@ -35,5 +37,4 @@ export class MailerService {
 			return info;
 
 		}
-
 }

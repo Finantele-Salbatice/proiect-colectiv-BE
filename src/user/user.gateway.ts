@@ -5,7 +5,7 @@ import { ConfigProvider } from 'src/system/ConfigProvider';
 import { User } from './models/User';
 import { Token } from './models/Token';
 
-//doar functiile care comunica cu baza de date
+//doarfunctiilecarecomunicacubazadedate
 
 @Injectable()
 export class UserGateway extends Database {
@@ -37,6 +37,19 @@ export class UserGateway extends Database {
 			values: [username],
 		});
 	}
+
+	findById(id: number): Promise<any> {
+		const sql = `
+		SELECT * from ${this.table}
+		WHERE id = ?;
+		`;
+
+		return this.query({
+			sql,
+			values: [id],
+		});
+	}
+
 	findByUsernameAndPassword(username: string, password: string): Promise<any> {
 		const sql = `
 		SELECT * from ${this.table}
@@ -57,6 +70,41 @@ export class UserGateway extends Database {
 		return this.query({
 			sql,
 			values: [t],
+		});
+	}
+
+	updateUser(user: User,id: number): Promise<any> {
+		const sql = `
+			UPDATE ${this.table} SET ? WHERE id = ?;
+	`;
+
+		return this.query({
+			sql,
+			values:[user,id],
+		});
+	}
+	updateToken(token: Token,id: number): Promise<any> {
+		const sql = `
+			UPDATE${this.token}
+			SET ?
+			WHERE id = ?;
+	`;
+
+		return this.query({
+			sql,
+			values:[token,id],
+		});
+	}
+
+	findResetToken(token: string): Promise<any> {
+		const sql = `
+			SELECT * from ${this.token}
+			WHERE token = ? and active = ? and type=?;
+	`;
+
+		return this.query({
+			sql,
+			values:[token,1,'reset'],
 		});
 	}
 

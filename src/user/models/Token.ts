@@ -1,14 +1,13 @@
 
 export interface Token {
-    id?: number;
-    user_id: number;
-    token: string;
-    active: number;
-    type: TokenType;
-    created_at?: Date;
-  }
+	id?: number;
+	user_id?: number;
+	token?: string;
+	active?: number;
+	type?: TokenType;
+	created_at?: Date;
+}
 
-export enum TokenType{
-      reset = 'reset'
-  }
-
+export enum TokenType {
+  reset = 'reset'
+}
