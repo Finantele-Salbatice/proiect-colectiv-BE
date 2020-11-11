@@ -4,7 +4,7 @@ import { UserController } from './user/user.controller';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [SystemModule, UserModule],
-  controllers: [UserController]
+	imports: [SystemModule, UserModule],
+	controllers: [UserController],
 })
 export class AppModule {}

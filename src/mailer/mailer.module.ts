@@ -4,8 +4,8 @@ import { MailerService } from './mailer.service';
 
 
 @Module({
-  providers: [MailerService],
-  exports: [MailerService],
-  imports: [SystemModule]
+	providers: [MailerService],
+	exports: [MailerService],
+	imports: [SystemModule],
 })
 export class MailerModule {}
