@@ -8,8 +8,8 @@ import { MailerModule } from 'src/mailer/mailer.module';
 //de importat modulul de mailer
 
 @Module({
-  providers: [UserGateway, UserService],
-  exports: [UserService],
-  imports: [SystemModule, AuthModule, MailerModule]
+	providers: [UserGateway, UserService],
+	exports: [UserService],
+	imports: [SystemModule, AuthModule, MailerModule],
 })
 export class UserModule {}
