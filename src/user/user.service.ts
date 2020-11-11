@@ -11,7 +11,8 @@ import validator from 'validator';
 
 @Injectable()
 export class UserService {
-	constructor(private gateway: UserGateway, private configProvider: ConfigProvider, private mailer: MailerService) {}
+	constructor(private gateway: UserGateway, private configProvider: ConfigProvider, private mailer: MailerService) {
+	}
 
 	get secret(): string {
 		return this.configProvider.getConfig().SECRET_KEY;
@@ -21,22 +22,6 @@ export class UserService {
 		const [result] = await this.gateway.findByUsername(email);
 		if (!result) {
 			throw new NotFoundException('Invalid username or password');
-		}
-
-		return result;
-	}
-	async findUserById(id: number): Promise<User>  {
-		const [result] = await this.gateway.findById(id);
-		if (!result) {
-			throw new NotFoundException('Invalid id!');
-		}
-
-		return result;
-	}
-	async findTokenById(token: string): Promise<Token> {
-		const [result] = await await this.gateway.findResetToken(token);
-		if (!result) {
-			throw new NotFoundException('Active rest token not found!');
 		}
 
 		return result;
@@ -57,6 +42,75 @@ export class UserService {
 		return key.toString('hex');
 	}
 
+	async registerUser(firstName: string, lastName: string, email: string, password: string): Promise<any> {
+		const pass = this.createHashedPassword(password);
+		const user: User = {
+			first_name: firstName,
+			last_name: lastName,
+			active:0,
+			email,
+			password:pass.key,
+			salt:pass.salt,
+		};
+		//validate email
+		await this.validateUser(user);
+		const result = await this.gateway.addUserInDB(user);
+		const t = uuidv4();
+		const token: Token = {
+			user_id : result.insertId,
+			token : t,
+			active : 1,
+			type : TokenType.activate,
+		};
+
+		await this.gateway.addTokenInDB(token);
+		await this.mailer.sendActivateAccountEmail(t, user.email);
+		return {
+			ok:true,
+		};
+	}
+
+	async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
+		const [result] = await this.gateway.findByUsernameAndPassword(email, password);
+		if (!result) {
+			throw new NotFoundException('Invalid username or password');
+		}
+		return result;
+	}
+
+	async login(email: string, password: string): Promise<string>  {
+		const user = await this.findUserByEmail(email);
+		const pswd = this.hashPassword(user.salt, password);
+		const result = await this.findUserByUsernameAndPassword(email, pswd);
+		if (result.active === 0) {
+			throw new NotFoundException('You need to activate your account');
+		}
+		return this.getUserToken(result);
+	}
+
+	getUserToken(user: User): string {
+		return sign({
+			userId : user.id,
+		}, this.secret);
+	}
+
+	async findUserById(id: number): Promise<User>  {
+		const [result] = await this.gateway.findById(id);
+		if (!result) {
+			throw new NotFoundException('Invalid id!');
+		}
+
+		return result;
+	}
+	async findTokenById(token: string): Promise<Token> {
+		const [result] = await await this.gateway.findResetToken(token);
+		if (!result) {
+			throw new NotFoundException('Active rest token not found!');
+		}
+
+		return result;
+	}
+
 	async validateUser(user: User): Promise<void> {
 		const [result] = await this.gateway.findByUsername(user.email);
 		if (result) {
@@ -74,46 +128,6 @@ export class UserService {
 		if (!validator.isEmail(result.email)) {
 			throw new Error('Bad email format!');
 		}
-	}
-
-	async registerUser(firstName: string, lastName: string, email: string, password: string): Promise<any> {
-		const pass = this.createHashedPassword(password);
-		const user: User = {
-			first_name: firstName,
-			last_name: lastName,
-			active:1,
-			email,
-			password:pass.key,
-			salt:pass.salt,
-		};
-
-		await this.validateUser(user);
-		await this.gateway.addUserInDB(user);
-		return {
-			ok:true,
-		};
-	}
-
-	async findUserByUsernameAndPassword(email: string, password: string): Promise<User>  {
-		const [result] = await this.gateway.findByUsernameAndPassword(email, password);
-		if (!result) {
-			throw new NotFoundException('Invalid username or password');
-		}
-
-		return result;
-	}
-
-	async login(email: string, password: string): Promise<string>  {
-		const user = await this.findUserByEmail(email);
-		const pswd = this.hashPassword(user.salt, password);
-		const result = await this.findUserByUsernameAndPassword(email, pswd);
-		return this.getUserToken(result);
-	}
-
-	getUserToken(user: User): string {
-		return sign({
-			userId : user.id,
-		}, this.secret);
 	}
 
 	async updatePassword(token: string, password: string): Promise<any> {
@@ -153,6 +167,30 @@ export class UserService {
 
 		return {
 			ok:true,
+		};
+	}
+
+	async activateUser(identifier: string): Promise<any> {
+		const [result] = await this.gateway.findTokenByToken(identifier);
+		if (!result) {
+			throw new NotFoundException('Invalid token');
+		}
+
+		if (result.active === 0) {
+			throw new NotFoundException('Token already used');
+		}
+
+		if (result.type !== TokenType.activate) {
+			throw new NotFoundException('Invalid token');
+		}
+
+		const token: Token = {
+			active: 0,
+		};
+		await this.gateway.updateToken(token, result.id);
+		await this.gateway.updateUserActivation(result.user_id);
+		return {
+			ok: true,
 		};
 	}
 

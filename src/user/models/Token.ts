@@ -8,6 +8,7 @@ export interface Token {
 	created_at?: Date;
 }
 
-export enum TokenType {
-  reset = 'reset'
+export enum TokenType{
+	reset = 'reset',
+	activate = 'activate'
 }
