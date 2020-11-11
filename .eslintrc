@@ -54,6 +54,16 @@
         "max": 1
       }],
       "curly": ["error", "all"],
-      "brace-style": ["error", "1tbs"]
+      "brace-style": ["error", "1tbs"],
+      "padding-line-between-statements": [
+        "error", {
+          "blankLine": "always", "prev": "*", "next": "function"
+        }],
+      "object-curly-newline": ["error", {
+        "ObjectExpression": "always",
+        "ObjectPattern": { "multiline": true },
+        "ImportDeclaration": "never",
+        "ExportDeclaration": { "multiline": true, "minProperties": 3 }
+    }]
   }
 }

@@ -111,7 +111,9 @@ export class UserService {
 	}
 
 	getUserToken(user: User): string {
-		return sign({ userId : user.id }, this.secret);
+		return sign({
+			userId : user.id,
+		}, this.secret);
 	}
 
 	async updatePassword(token: string, password: string): Promise<any> {
@@ -137,10 +139,10 @@ export class UserService {
 			const user = await this.findUserByEmail(email);
 
 			const token: Token = {
-				user_id : user.id,
-				token : t,
-				active : 1,
-				type : TokenType.reset,
+				user_id: user.id,
+				token: t,
+				active: 1,
+				type: TokenType.reset,
 			};
 			await this.gateway.addTokenInDB(token);
 			await this.mailer.sendResetEmail(t, user.email);
