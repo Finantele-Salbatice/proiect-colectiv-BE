@@ -5,15 +5,17 @@ import { ConfigProvider } from 'src/system/ConfigProvider';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(configProvider: ConfigProvider) {
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: configProvider.getConfig().SECRET_KEY,
-    });
-  }
+	constructor(configProvider: ConfigProvider) {
+		super({
+			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+			ignoreExpiration: false,
+			secretOrKey: configProvider.getConfig().SECRET_KEY,
+		});
+	}
 
-  async validate(payload: any): Promise<any> {
-    return { userId: payload.userId };
-  }
+	validate(payload: any): any {
+		return {
+			userId: payload.userId,
+		};
+	}
 }
