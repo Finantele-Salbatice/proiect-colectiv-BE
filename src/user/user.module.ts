@@ -7,8 +7,8 @@ import { AuthModule } from 'src/auth/auth.module';
 //de importat modulul de mailer
 
 @Module({
-  providers: [UserGateway, UserService],
-  exports: [UserService],
-  imports: [SystemModule, AuthModule]
+	providers: [UserGateway, UserService],
+	exports: [UserService],
+	imports: [SystemModule, AuthModule],
 })
 export class UserModule {}

@@ -8,9 +8,7 @@ export interface Token {
     created_at?: Date;
   }
 
-  
 export enum TokenType{
       reset = 'reset'
   }
-  
- 
+
