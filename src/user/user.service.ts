@@ -47,10 +47,10 @@ export class UserService {
 		const user: User = {
 			first_name: firstName,
 			last_name: lastName,
-			active:0,
+			active: 0,
 			email,
-			password:pass.key,
-			salt:pass.salt,
+			password: pass.key,
+			salt: pass.salt,
 		};
 		//validate email
 		await this.validateUser(user);
@@ -149,21 +149,16 @@ export class UserService {
 	}
 	async resetPasswd(email: string): Promise<any> {
 		const t = uuidv4();
-		try {
-			const user = await this.findUserByEmail(email);
+		const user = await this.findUserByEmail(email);
 
-			const token: Token = {
-				user_id: user.id,
-				token: t,
-				active: 1,
-				type: TokenType.reset,
-			};
-			await this.gateway.addTokenInDB(token);
-			await this.mailer.sendResetEmail(t, user.email);
-
-		} catch (err) {
-			console.log(err);
-		}
+		const token: Token = {
+			user_id: user.id,
+			token: t,
+			active: 1,
+			type: TokenType.reset,
+		};
+		await this.gateway.addTokenInDB(token);
+		await this.mailer.sendResetEmail(t, user.email);
 
 		return {
 			ok:true,

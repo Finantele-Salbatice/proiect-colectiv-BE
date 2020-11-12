@@ -85,7 +85,7 @@ export class UserGateway extends Database {
 	}
 	updateToken(token: Token,id: number): Promise<any> {
 		const sql = `
-			UPDATE${this.tokenTable}
+			UPDATE ${this.tokenTable}
 			SET ?
 			WHERE id = ?;
 	`;
