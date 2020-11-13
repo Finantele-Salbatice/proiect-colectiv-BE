@@ -9,7 +9,7 @@ export interface ITransaction {
   account_id?: number;
   beneficiary?: string;
   type?: ITransactionDirection;
-  addition_data?: string;
+  additional_data?: string;
   created_at?: Date;
 }
 
