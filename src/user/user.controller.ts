@@ -33,7 +33,7 @@ export class UserController {
 	}
 
 	@Post('/register')
-	async register(@Body() body: RegisterRequest): Promise<any> {
+	register(@Body() body: RegisterRequest): Promise<any> {
 		return this.service.registerUser(body.first_name,body.last_name,body.email,body.password);
 	}
 

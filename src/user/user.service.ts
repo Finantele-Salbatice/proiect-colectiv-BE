@@ -53,7 +53,7 @@ export class UserService {
 			salt: pass.salt,
 		};
 		//validate email
-		await this.validateUser(user);
+		this.validateUser(user);
 		const result = await this.gateway.addUserInDB(user);
 		const t = uuidv4();
 		const token: Token = {
@@ -111,21 +111,20 @@ export class UserService {
 		return result;
 	}
 
-	async validateUser(user: User): Promise<void> {
-		const [result] = await this.gateway.findByUsername(user.email);
-		if (result) {
+	validateUser(user: User): void {
+		if (user) {
 			throw new Error('There is already an account with this email');
 		}
-		if (result.first_name === '') {
+		if (user.first_name === '') {
 			throw new Error('First name is empty!');
 		}
-		if (result.last_name === '') {
+		if (user.last_name === '') {
 			throw new Error('Last name is empty!');
 		}
-		if (result.email === '') {
+		if (user.email === '') {
 			throw new Error('Email is empty!');
 		}
-		if (!validator.isEmail(result.email)) {
+		if (!validator.isEmail(user.email)) {
 			throw new Error('Bad email format!');
 		}
 	}
