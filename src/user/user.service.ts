@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { User } from 'src/user/models/User';
 import { UserGateway } from './user.gateway';
 import * as crypto from 'crypto';
@@ -53,7 +53,7 @@ export class UserService {
 			salt: pass.salt,
 		};
 		//validate email
-		this.validateUser(user);
+		await this.validateUser(user);
 		const result = await this.gateway.addUserInDB(user);
 		const t = uuidv4();
 		const token: Token = {
@@ -111,21 +111,22 @@ export class UserService {
 		return result;
 	}
 
-	validateUser(user: User): void {
-		if (user) {
-			throw new Error('There is already an account with this email');
+	async validateUser(user: User): Promise<void> {
+		const [result] = await this.gateway.findByUsername(user.email);
+		if (result) {
+			throw new UnprocessableEntityException('There is already an account with this email');
 		}
 		if (user.first_name === '') {
-			throw new Error('First name is empty!');
+			throw new UnprocessableEntityException('First name is empty!');
 		}
 		if (user.last_name === '') {
-			throw new Error('Last name is empty!');
+			throw new UnprocessableEntityException('Last name is empty!');
 		}
 		if (user.email === '') {
-			throw new Error('Email is empty!');
+			throw new UnprocessableEntityException('Email is empty!');
 		}
 		if (!validator.isEmail(user.email)) {
-			throw new Error('Bad email format!');
+			throw new UnprocessableEntityException('Bad email format!');
 		}
 	}
 
@@ -137,7 +138,7 @@ export class UserService {
 			salt: pass.salt,
 		};
 		const updatedToken: Token = {
-			active:0,
+			active: 0,
 		};
 		await this.gateway.updateToken(updatedToken,t.id);
 		await this.gateway.updateUser(updatedUser,t.user_id);
