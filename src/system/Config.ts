@@ -13,4 +13,8 @@ export interface IConfig {
   SECRET_KEY: string;
   UI_HOST: string;
   EMAIL_PASSWORD: string;
+  BT_FORM_URL: string;
+  BT_CLIENT_ID: string;
+  BT_CLIENT_SECRET: string;
+  BT_CONSENT_ID: string;
 }
