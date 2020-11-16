@@ -60,9 +60,9 @@ export class AccountService {
 			params: {
 				response_type: 'code',
 				client_id: this.BT_CLIENT_ID,
-				redirect_uri: `${this.configProvider.config.UI_HOST}/addBTAccount/${acc.id}`,
+				redirect_uri: `${this.configProvider.config.UI_HOST}/addBTAccount`,
 				scope: `AIS:${this.BT_CONSENT_ID}`,
-				state: 'statetest',
+				state: acc.id,
 				code_challenge: codeChallange,
 				code_challenge_method: 'S256',
 			},
