@@ -43,27 +43,28 @@ export class AccountService {
 			status: EnumBankAccountStatus.inProgess,
 			code_verifier: verifier,
 		};
-		await this.gateway.addAccount(acc);
-		return this.createBTForm(verifier);
+		const result = await this.gateway.addAccount(acc);
+		acc.id = result.insertId;
+		return this.createBTForm(acc);
 	}
 
 	sha256(buffer: string): Buffer {
 		return createHash('sha256').update(buffer).digest();
 	}
 
-	createBTForm(codeVerifier: string): string {
-		const codeChallange = this.base64URLEncode(this.sha256(codeVerifier));
+	createBTForm(acc: IBankAccount): string {
+		const codeChallange = this.base64URLEncode(this.sha256(acc.code_verifier));
 		const ref = this.httpService.axiosRef;
 		const config: AxiosRequestConfig = {
 			url: this.BT_FORM_URL,
 			params: {
 				response_type: 'code',
 				client_id: this.BT_CLIENT_ID,
-				redirect_url: this.configProvider.config.UI_HOST,
+				redirect_uri: `${this.configProvider.config.UI_HOST}/addBTAccount/${acc.id}`,
 				scope: `AIS:${this.BT_CONSENT_ID}`,
 				state: 'statetest',
-				code_challange: codeChallange,
-				code_challange_method: 'S256',
+				code_challenge: codeChallange,
+				code_challenge_method: 'S256',
 			},
 		};
 		const url = ref.getUri(config);
