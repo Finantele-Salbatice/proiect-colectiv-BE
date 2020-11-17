@@ -14,7 +14,7 @@ export class AccountController {
 	}
 
 	@Post('btcallback')
-	btcallback(@Request() req: IBTCallback): void {
-		console.log(req);
+	async btcallback(@Request() req: IBTCallback): Promise<void> {
+		await this.service.handleBTCallback(req);
 	}
 }
