@@ -6,7 +6,7 @@ import { randomBytes, createHash } from 'crypto';
 import { AxiosRequestConfig } from 'axios';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { stringify } from 'querystring';
-import { IOauth } from './models/OAUth';
+import { IOauth } from './models/Oauth';
 import { IBTOauthResponse } from './models/BTOauth';
 
 @Injectable()
