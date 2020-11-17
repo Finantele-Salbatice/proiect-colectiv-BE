@@ -6,6 +6,8 @@ import { randomBytes, createHash } from 'crypto';
 import { AxiosRequestConfig } from 'axios';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { stringify } from 'querystring';
+import { IOauth } from './models/OAUth';
+import { IBTOauthResponse } from './models/BTOauth';
 
 @Injectable()
 export class AccountService {
@@ -14,7 +16,7 @@ export class AccountService {
 
 	async addAcount(userId: number, bank: EnumBanks): Promise<string> {
 		if (bank === EnumBanks.BT) {
-			return this.createBTAccount(userId);
+			return this.createBTOauth(userId);
 		}
 	}
 
@@ -49,17 +51,21 @@ export class AccountService {
 			.replace(/=/g, '');
 	}
 
-	async createBTAccount(userId: number): Promise<string> {
+	async createBTOauth(userId: number): Promise<string> {
 		const verifier = this.base64URLEncode(randomBytes(32));
-		const acc: IBankAccount = {
+		const acc: IOauth = {
 			user_id: userId,
 			bank: EnumBanks.BT,
 			status: EnumBankAccountStatus.inProgess,
 			code_verifier: verifier,
 		};
-		const result = await this.gateway.addAccount(acc);
+		const result = await this.gateway.addOauth(acc);
 		acc.id = result.insertId;
 		return this.createBTForm(acc);
+	}
+
+	async insertBankAccount(account: IBankAccount): Promise<any> {
+		return this.gateway.addAccount(account);
 	}
 
 	sha256(buffer: string): Buffer {
@@ -93,9 +99,40 @@ export class AccountService {
 		return result;
 	}
 
+	async getOauthById(id: number): Promise<IOauth> {
+		const [result] = await this.gateway.getOauthById(id);
+		if (!result) {
+			throw new NotFoundException('Oauth not found!');
+		}
+		return result;
+	}
+
+	async handleBTCallbackData(data: IBTOauthResponse, userId: number): Promise<void> {
+		const accountsCount = +data.accounts_count;
+		for (let i = 0; i < accountsCount; i++) {
+			const account: IBankAccount = {
+				user_id: userId,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+			};
+			const currentAcc = `accounts_${i}`;
+			const accountId = data[currentAcc];
+			account.account_id = accountId;
+			const currentTran = `transactions_${i}`;
+			if (data[currentTran]) {
+				account.transaction_see = accountId;
+			}
+			const currentBalance = `transactions_${i}`;
+			if (data[currentBalance]) {
+				account.balance_see = accountId;
+			}
+			await this.insertBankAccount(account);
+		}
+	}
+
 	async handleBTCallback(request: IBTCallback): Promise<void> {
 		const id = +request.state;
-		const account = await this.getAccountById(id);
+		const account = await this.getOauthById(id);
 		const body = {
 			code: request.code,
 			grant_type: 'authorization_code',
@@ -112,7 +149,8 @@ export class AccountService {
 					'Content-Type': 'application/x-www-form-urlencoded',
 				},
 			});
-			console.log(result.data);
+			const data = result.data;
+			await this.handleBTCallbackData(data, account.user_id);
 		} catch (err) {
 			console.log(err);
 		}
