@@ -1,5 +1,5 @@
 
 export interface IBTCallback {
-  state: number;
+  state: string;
   code: string;
 }

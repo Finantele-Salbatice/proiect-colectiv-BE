@@ -94,7 +94,7 @@ export class AccountService {
 	}
 
 	async handleBTCallback(request: IBTCallback): Promise<void> {
-		const id = request.state;
+		const id = +request.state;
 		const account = await this.getAccountById(id);
 		const body = {
 			code: request.code,

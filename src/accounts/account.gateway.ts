@@ -24,7 +24,7 @@ export class AccountGateway extends Database {
 
 	getAccountById(id: number): Promise<any> {
 		const sql = `
-			SELECT * FROm ${this.table}
+			SELECT * FROM ${this.table}
 			WHERE id = ?;
 		`;
 
