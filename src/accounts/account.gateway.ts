@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { Database } from 'src/system/database';
 import { IBankAccount } from './models/Account';
-import { IOauth } from './models/OAUth';
+import { IOauth } from './models/Oauth';
 
 @Injectable()
 export class AccountGateway extends Database {
