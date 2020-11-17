@@ -114,6 +114,7 @@ export class AccountService {
 				user_id: userId,
 				access_token: data.access_token,
 				refresh_token: data.refresh_token,
+				bank: EnumBanks.BT,
 			};
 			const currentAcc = `accounts_${i}`;
 			const accountId = data[currentAcc];
