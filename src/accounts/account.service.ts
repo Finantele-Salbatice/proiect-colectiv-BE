@@ -106,12 +106,16 @@ export class AccountService {
 		};
 
 		const axios = this.httpService.axiosRef;
-		const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-			},
-		});
-		console.log(result.data);
+		try {
+			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+			});
+			console.log(result.data);
+		} catch (err) {
+			console.log(err);
+		}
 	}
 }
 
