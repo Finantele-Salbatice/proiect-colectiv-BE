@@ -1,4 +1,4 @@
-import { Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { IAccountAdd } from 'src/requests/AccountAdd';
 import { IBTCallback } from 'src/requests/BTCallback';
@@ -14,7 +14,7 @@ export class AccountController {
 	}
 
 	@Post('btcallback')
-	async btcallback(@Request() req: IBTCallback): Promise<void> {
-		await this.service.handleBTCallback(req);
+	async btcallback(@Body() body: IBTCallback): Promise<void> {
+		await this.service.handleBTCallback(body);
 	}
 }
