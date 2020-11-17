@@ -109,6 +109,10 @@ export class AccountService {
 
 	async handleBTCallbackData(data: IBTOauthResponse, userId: number): Promise<void> {
 		const accountsCount = +data.accounts_count;
+		const transactionsCount = +data.transactions_count;
+		const balancesCount = +data.balances_count;
+		const accounts: Record<string, IBankAccount> = {
+		};
 		for (let i = 0; i < accountsCount; i++) {
 			const account: IBankAccount = {
 				user_id: userId,
@@ -119,15 +123,51 @@ export class AccountService {
 			const currentAcc = `accounts_${i}`;
 			const accountId = data[currentAcc];
 			account.account_id = accountId;
+			account.iban = accountId;
+			accounts[accountId] = account;
+		}
+
+		for (let i = 0; i < transactionsCount; i++) {
+			const account: IBankAccount = {
+				user_id: userId,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+				bank: EnumBanks.BT,
+			};
 			const currentTran = `transactions_${i}`;
-			if (data[currentTran]) {
-				account.transaction_see = accountId;
+			const accountId = data[currentTran];
+			if (accounts[accountId]) {
+				accounts[accountId].transaction_see = accountId;
+				continue;
 			}
-			const currentBalance = `transactions_${i}`;
-			if (data[currentBalance]) {
-				account.balance_see = accountId;
+			account.account_id = accountId;
+			account.iban = accountId;
+			account.transaction_see = accountId;
+			accounts[accountId] = account;
+		}
+
+		for (let i = 0; i < balancesCount; i++) {
+			const account: IBankAccount = {
+				user_id: userId,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+				bank: EnumBanks.BT,
+			};
+			const currentBalance = `balances_${i}`;
+			const accountId = data[currentBalance];
+			if (accounts[accountId]) {
+				accounts[accountId].balance_see = accountId;
+				continue;
 			}
-			await this.insertBankAccount(account);
+			account.account_id = accountId;
+			account.iban = accountId;
+			account.balance_see = accountId;
+			accounts[accountId] = account;
+		}
+
+		for (const key in accounts) {
+			const acc = accounts[key];
+			await this.insertBankAccount(acc);
 		}
 	}
 
