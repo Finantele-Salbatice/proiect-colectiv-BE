@@ -11,6 +11,7 @@ export interface ITransaction {
   beneficiary?: string;
   type?: ITransactionDirection;
   additional_data?: string;
+  raw_data?: string;
   created_at?: Date;
 }
 

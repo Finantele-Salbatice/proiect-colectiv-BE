@@ -71,4 +71,19 @@ export class AccountGateway extends Database {
 			values: [account, id],
 		});
 	}
+
+	updateBankAccountByIban(account: IBankAccount, iban: string): Promise<any> {
+		const sql = `
+		UPDATE ${this.bankAccountTable}
+		SET ?
+    WHERE iban = ?;`;
+
+		delete account.id;
+		delete account.iban;
+
+		return this.query({
+			sql,
+			values: [account, iban],
+		});
+	}
 }

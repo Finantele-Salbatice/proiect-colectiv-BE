@@ -1,6 +1,6 @@
 import { Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { ITransactionsListRequest } from 'src/requests/TransactionsTestRequest';
+import { ITransactionsListRequest } from 'src/requests/TransactionsListRequest';
 import { TransactionService } from './transaction.service';
 
 @Controller('transactions')

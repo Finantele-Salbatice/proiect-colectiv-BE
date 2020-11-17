@@ -6,6 +6,7 @@ export interface IBankAccount {
   account_id?: string;
   iban?: string;
   balance?: number;
+  description?: string;
   status?: EnumBankAccountStatus;
   access_token?: string;
   refresh_token?: string;
@@ -15,6 +16,7 @@ export interface IBankAccount {
   transaction_see?: string;
   balance_see?: string;
   token_expires_at?: Date;
+  currency?: string;
 }
 
 export enum EnumBanks {

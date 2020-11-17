@@ -8,12 +8,14 @@ import { IBTCallback } from 'src/requests/BTCallback';
 import { stringify } from 'querystring';
 import { IOauth } from './models/Oauth';
 import { IBTOauthResponse } from './models/BTOauth';
-import moment from 'moment';
+import * as moment from 'moment';
 import { v4 } from 'uuid';
+import { TransactionService } from 'src/transactions/transaction.service';
+import { ITransaction } from 'src/transactions/models/Transactions';
 
 @Injectable()
 export class AccountService {
-	constructor(private gateway: AccountGateway, private configProvider: ConfigProvider, private httpService: HttpService) {
+	constructor(private gateway: AccountGateway, private configProvider: ConfigProvider, private httpService: HttpService, private transactionService: TransactionService) {
 	}
 
 	async addAcount(userId: number, bank: EnumBanks): Promise<string> {
@@ -128,7 +130,6 @@ export class AccountService {
 			};
 			const currentAcc = `accounts_${i}`;
 			const accountId = data[currentAcc];
-			account.account_id = accountId;
 			account.iban = accountId;
 			accounts[accountId] = account;
 		}
@@ -146,7 +147,6 @@ export class AccountService {
 				accounts[accountId].transaction_see = accountId;
 				continue;
 			}
-			account.account_id = accountId;
 			account.iban = accountId;
 			account.transaction_see = accountId;
 			accounts[accountId] = account;
@@ -165,7 +165,6 @@ export class AccountService {
 				accounts[accountId].balance_see = accountId;
 				continue;
 			}
-			account.account_id = accountId;
 			account.iban = accountId;
 			account.balance_see = accountId;
 			accounts[accountId] = account;
@@ -235,27 +234,105 @@ export class AccountService {
 		}
 	}
 
+	async getTransactionsByAccount(accountId: number): Promise<void> {
+		const account = await this.getAccountById(accountId);
+		const ref = this.httpService.axiosRef;
+
+		const params: any = {
+			bookingStatus: 'booked',
+		};
+
+		if (!account.transaction_see) {
+			return;
+		}
+
+		if (account.synced_at && !moment().diff(account.synced_at, 'day')) {
+			return;
+		}
+		if (account.synced_at && moment().diff(account.synced_at, 'day')) {
+			params.dateFrom = moment(account.synced_at).add(1, 'day').format('YYYY-MM-DD');
+		} else if (!account.synced_at) {
+			params.dateFrom = moment().subtract(89, 'day').format('YYYY-MM-DD');
+		}
+		try {
+			const result = await ref.get(`${this.BT_ACCOUNTS_URL}/${account.account_id}/transactions`, {
+				params,
+				headers: {
+					authorization: `Bearer ${account.access_token}`,
+					'x-request-id': v4(),
+					'consent-id': this.BT_CONSENT_ID,
+					'psu-ip-address': '86.126.212.101',
+				},
+			});
+			const transactions = result.data.transactions.booked;
+			await Promise.all(transactions.map(async trans => {
+				const insertTransaction: ITransaction = {
+					account_id: accountId,
+					raw_data: JSON.stringify(trans),
+					amount: trans.transactionAmount.amount,
+					currency: trans.transactionAmount.currency,
+					transaction_id: trans.transactionId,
+					beneficiary: trans.creditorName,
+				};
+				await this.transactionService.insertTransaction(insertTransaction);
+			}));
+			await this.updateBankAccountById({
+				synced_at: new Date(),
+			}, accountId);
+		} catch (err) {
+			if (err.response) {
+				console.log(err.response.data);
+			} else {
+				console.log(err);
+			}
+		}
+	}
+
 	async syncBTAccount(accountId: number): Promise<void> {
 		const account = await this.getAccountById(accountId);
-		if (account.token_expires_at > new Date()) {
+		if (moment(account.token_expires_at).isBefore(new Date())) {
 			const token = await this.refreshBTOauthToken(account.id);
 			account.access_token = token;
 		}
 
 		const ref = this.httpService.axiosRef;
 
-		const result = await ref.get(this.BT_ACCOUNTS_URL, {
-			params: {
-				withBalance: !!account.balance_see,
-			},
-			headers: {
-				authorization: `Bearer ${account.access_token}`,
-				'x-request-id': v4(),
-				'consent-id': this.BT_CONSENT_ID,
-			},
-		});
+		try {
 
-		console.log(result.data);
+			const result = await ref.get(this.BT_ACCOUNTS_URL, {
+				params: {
+					withBalance: !!account.balance_see,
+				},
+				headers: {
+					authorization: `Bearer ${account.access_token}`,
+					'x-request-id': v4(),
+					'consent-id': this.BT_CONSENT_ID,
+					'psu-ip-address': '86.126.212.101',
+				},
+			});
+			const accounts: Array<any> = result.data.accounts;
+			await Promise.all(accounts.map(async acc => {
+				const iban = acc.iban;
+				const update: IBankAccount = {
+					currency: acc.currency,
+					account_id: acc.resourceId,
+					description: acc.name,
+					additional_data: JSON.stringify(acc),
+				};
+				if (acc.balances) {
+					const amount = acc.balances[0].balanceAmount.amount;
+					update.balance = amount;
+				}
+				await this.gateway.updateBankAccountByIban(update, iban);
+			}));
+			await this.getTransactionsByAccount(accountId);
+		} catch (err) {
+			if (err.response) {
+				console.log(err.response.data);
+			} else {
+				console.log(err);
+			}
+		}
 	}
 }
 
