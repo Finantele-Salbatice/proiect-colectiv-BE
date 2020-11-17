@@ -18,4 +18,5 @@ export interface IConfig {
   BT_CLIENT_SECRET: string;
   BT_CONSENT_ID: string;
   BT_TOKEN_URL: string;
+  BT_ACCOUNTS_URL: string;
 }

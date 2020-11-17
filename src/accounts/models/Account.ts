@@ -14,6 +14,7 @@ export interface IBankAccount {
   synced_at?: Date;
   transaction_see?: string;
   balance_see?: string;
+  token_expires_at?: Date;
 }
 
 export enum EnumBanks {

@@ -8,6 +8,8 @@ import { IBTCallback } from 'src/requests/BTCallback';
 import { stringify } from 'querystring';
 import { IOauth } from './models/Oauth';
 import { IBTOauthResponse } from './models/BTOauth';
+import moment from 'moment';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class AccountService {
@@ -42,6 +44,10 @@ export class AccountService {
 
 	get BT_TOKEN_URL(): string {
 		return this.configProvider.getConfig().BT_TOKEN_URL;
+	}
+
+	get BT_ACCOUNTS_URL(): string {
+		return this.configProvider.getConfig().BT_ACCOUNTS_URL;
 	}
 
 	base64URLEncode(str: Buffer): string {
@@ -173,14 +179,14 @@ export class AccountService {
 
 	async handleBTCallback(request: IBTCallback): Promise<void> {
 		const id = +request.state;
-		const account = await this.getOauthById(id);
+		const oauth = await this.getOauthById(id);
 		const body = {
 			code: request.code,
 			grant_type: 'authorization_code',
 			redirect_uri: `${this.UI_HOST}/addBTAccount`,
 			client_id: this.BT_CLIENT_ID,
 			client_secret: this.BT_CLIENT_SECRET,
-			code_verifier: account.code_verifier,
+			code_verifier: oauth.code_verifier,
 		};
 
 		const axios = this.httpService.axiosRef;
@@ -191,10 +197,65 @@ export class AccountService {
 				},
 			});
 			const data = result.data;
-			await this.handleBTCallbackData(data, account.user_id);
+			await this.handleBTCallbackData(data, oauth.user_id);
 		} catch (err) {
 			console.log(err);
 		}
+	}
+
+	async updateBankAccountById(bankAccount: IBankAccount, id: number): Promise<void> {
+		await this.gateway.updateBankAccountById(bankAccount, id);
+	}
+
+	async refreshBTOauthToken(accountId: number): Promise<string> {
+		const account = await this.getAccountById(accountId);
+		const body = {
+			refresh_token: account.refresh_token,
+			grant_type: 'refresh_token',
+			redirect_uri: `${this.UI_HOST}/addBTAccount`,
+			client_id: this.BT_CLIENT_ID,
+			client_secret: this.BT_CLIENT_SECRET,
+		};
+
+		const axios = this.httpService.axiosRef;
+		try {
+			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+			});
+			const data = result.data;
+			const token = data.access_token;
+			account.access_token = token;
+			account.token_expires_at = moment().add(1, 'hour').toDate();
+			await this.updateBankAccountById(account, account.id);
+			return token;
+		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	async syncBTAccount(accountId: number): Promise<void> {
+		const account = await this.getAccountById(accountId);
+		if (account.token_expires_at > new Date()) {
+			const token = await this.refreshBTOauthToken(account.id);
+			account.access_token = token;
+		}
+
+		const ref = this.httpService.axiosRef;
+
+		const result = await ref.get(this.BT_ACCOUNTS_URL, {
+			params: {
+				withBalance: !!account.balance_see,
+			},
+			headers: {
+				authorization: `Bearer ${account.access_token}`,
+				'x-request-id': v4(),
+				'consent-id': this.BT_CONSENT_ID,
+			},
+		});
+
+		console.log(result.data);
 	}
 }
 

@@ -59,4 +59,16 @@ export class AccountGateway extends Database {
 			values: [id],
 		});
 	}
+
+	updateBankAccountById(account: IBankAccount, id: number): Promise<any> {
+		const sql = `
+		UPDATE ${this.bankAccountTable}
+		SET ?
+		WHERE id = ?;`;
+
+		return this.query({
+			sql,
+			values: [account, id],
+		});
+	}
 }
