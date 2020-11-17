@@ -1,9 +1,11 @@
-import { Injectable, HttpService } from '@nestjs/common';
+import { Injectable, HttpService, NotFoundException } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { AccountGateway } from './account.gateway';
 import { EnumBankAccountStatus, EnumBanks, IBankAccount } from './models/Account';
 import { randomBytes, createHash } from 'crypto';
 import { AxiosRequestConfig } from 'axios';
+import { IBTCallback } from 'src/requests/BTCallback';
+import { stringify } from 'querystring';
 
 @Injectable()
 export class AccountService {
@@ -16,16 +18,28 @@ export class AccountService {
 		}
 	}
 
+	get BT_CLIENT_SECRET(): string {
+		return this.configProvider.getConfig().BT_CLIENT_SECRET;
+	}
+
 	get BT_FORM_URL(): string {
-		return this.configProvider.config.BT_FORM_URL;
+		return this.configProvider.getConfig().BT_FORM_URL;
 	}
 
 	get BT_CLIENT_ID(): string {
-		return this.configProvider.config.BT_CLIENT_ID;
+		return this.configProvider.getConfig().BT_CLIENT_ID;
 	}
 
 	get BT_CONSENT_ID(): string {
-		return this.configProvider.config.BT_CONSENT_ID;
+		return this.configProvider.getConfig().BT_CONSENT_ID;
+	}
+
+	get UI_HOST(): string {
+		return this.configProvider.getConfig().UI_HOST;
+	}
+
+	get BT_TOKEN_URL(): string {
+		return this.configProvider.getConfig().BT_TOKEN_URL;
 	}
 
 	base64URLEncode(str: Buffer): string {
@@ -60,7 +74,7 @@ export class AccountService {
 			params: {
 				response_type: 'code',
 				client_id: this.BT_CLIENT_ID,
-				redirect_uri: `${this.configProvider.config.UI_HOST}/addBTAccount`,
+				redirect_uri: `${this.UI_HOST}/addBTAccount`,
 				scope: `AIS:${this.BT_CONSENT_ID}`,
 				state: acc.id,
 				code_challenge: codeChallange,
@@ -69,6 +83,35 @@ export class AccountService {
 		};
 		const url = ref.getUri(config);
 		return url;
+	}
+
+	async getAccountById(id: number): Promise<IBankAccount> {
+		const [result] = await this.gateway.getAccountById(id);
+		if (!result) {
+			throw new NotFoundException('Account not found!');
+		}
+		return result;
+	}
+
+	async handleBTCallback(request: IBTCallback): Promise<void> {
+		const id = request.state;
+		const account = await this.getAccountById(id);
+		const body = {
+			code: request.code,
+			grant_type: 'authorization_code',
+			redirect_uri: this.UI_HOST,
+			client_id: this.BT_CLIENT_ID,
+			client_secret: this.BT_CLIENT_SECRET,
+			code_verifier: account.code_verifier,
+		};
+
+		const axios = this.httpService.axiosRef;
+		const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		});
+		console.log(result.data);
 	}
 }
 

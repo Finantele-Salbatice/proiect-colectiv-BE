@@ -11,7 +11,7 @@ export class AccountGateway extends Database {
 		this.table = 'bank_accounts';
 	}
 
-	addAccount(account: IBankAccount): any {
+	addAccount(account: IBankAccount): Promise<any> {
 		const sql = `
 			INSERT INTO ${this.table} SET ?;
 		`;
@@ -19,6 +19,18 @@ export class AccountGateway extends Database {
 		return this.query({
 			sql,
 			values: [account],
+		});
+	}
+
+	getAccountById(id: number): Promise<any> {
+		const sql = `
+			SELECT * FROm ${this.table}
+			WHERE id = ?;
+		`;
+
+		return this.query({
+			sql,
+			values: [id],
 		});
 	}
 }

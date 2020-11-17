@@ -1,6 +1,5 @@
 
 export interface IBTCallback {
-  state: string;
+  state: number;
   code: string;
-  accountId: number;
 }
