@@ -12,4 +12,12 @@ export class TransactionController {
 		console.log(req.body);
 		console.log(req.user);
 	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('/filter')
+	filter(@Request() req: ITransactionsListRequest): Promise<any> {
+		console.log(req.body);
+		console.log(req.user);
+		return this.service.filterTransactions(req.body, req.user);
+	}
 }

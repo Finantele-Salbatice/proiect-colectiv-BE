@@ -6,6 +6,7 @@ export interface ITransactionsListRequest extends AuthRequest {
 
 export interface ITransactionsListFilters {
   orderBy?: string;
+  order?: string;
   from?: Date;
   to?: Date;
   accountId?: number;

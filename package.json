@@ -36,6 +36,7 @@
     "bcrypt": "^5.0.0",
     "dotenv": "^8.2.0",
     "jsonwebtoken": "^8.5.1",
+    "knex": "^0.21.12",
     "mysql": "^2.18.1",
     "nodemailer": "^6.4.15",
     "passport": "^0.4.1",
