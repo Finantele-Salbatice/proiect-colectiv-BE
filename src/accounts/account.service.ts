@@ -99,7 +99,7 @@ export class AccountService {
 		const body = {
 			code: request.code,
 			grant_type: 'authorization_code',
-			redirect_uri: this.UI_HOST,
+			redirect_uri: `${this.UI_HOST}/addBTAccount`,
 			client_id: this.BT_CLIENT_ID,
 			client_secret: this.BT_CLIENT_SECRET,
 			code_verifier: account.code_verifier,
