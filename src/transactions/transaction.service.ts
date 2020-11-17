@@ -6,17 +6,17 @@ import { TransactionGateway } from './transaction.gateway';
 @Injectable()
 export class TransactionService {
 	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {}
-	async lastTranzactions(nr: number): Promise<any> {
+	async lastTranzactions(nr: number, id: number): Promise<any> {
 		console.log('service');
-		const [result] = await this.gateway.getLastTranzactions(nr);
+		const [result] = await this.gateway.getLastTranzactions(nr,id);
 		if (!result) {
 			throw new NotFoundException('Tranzactions not found!');
 		}
 		return result;
 	}
-	async lastTranzactionsAmount(nr: number): Promise<any>  {
+	async lastTranzactionsAmount(nr: number, id: number): Promise<any>  {
 		console.log('service2');
-		const [result] = await this.gateway.getLastTranzactions(nr);
+		const [result] = await this.gateway.getLastTranzactionsSum(nr,id);
 		let sum = 0;
 		for (const t of result) {
 			console.log(t);
