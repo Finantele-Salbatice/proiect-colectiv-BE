@@ -8,17 +8,20 @@ export class TransactionService {
 	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {
 	}
 	async filterTransactions(body: ITransactionsListFilters, user: { userId: number; }): Promise<any> {
-		console.log(body);
-		console.log(user);
+		//console.log(body);
+		//console.log(user);
 		const filter: ITransactionsListFilters = {
-			orderBy: 'string',
-			accountId: 1,
-			amountAbove: 1,
-			amountBelow: 1,
-			skip: 1,
-			limit: 1,
+			orderBy: body.orderBy,
+			order: body.order,
+			from: body.from,
+			to: body.to,
+			accountId: body.accountId,
+			amountAbove: body.amountAbove,
+			amountBelow: body.amountBelow,
+			skip: body.skip,
+			limit: body.limit,
 		};
-		const [result] = await this.gateway.getTransactionsWithFilters(1, filter);
+		const result = await this.gateway.getTransactionsWithFilters(user.userId, filter);
 		console.log(result);
 		return result;
 	}
