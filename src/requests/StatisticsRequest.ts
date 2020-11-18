@@ -5,5 +5,5 @@ export interface StatisticsRequest extends AuthRequest {
 }
 
 export interface StatisticsRequestFilter {
-    lastDays: number;
+  lastDays: number;
 }

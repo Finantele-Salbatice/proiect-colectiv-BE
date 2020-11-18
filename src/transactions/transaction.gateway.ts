@@ -9,39 +9,30 @@ export class TransactionGateway extends Database {
 	constructor(configProvider: ConfigProvider) {
 		super(configProvider);
 		this.transactionTable = 'transactions';
-		this.bankAccountTable = 'transactions';
+		this.bankAccountTable = 'bank_accounts';
 	}
-	getLastTranzactions(nr: number, id: number): Promise<any> {
-		console.log('db');
+	getLastTransactions(days: number, userId: number): Promise<any> {
 		const sql = `
-		SELECT *
-		FROM ${this.transactionTable} as tr
-		LEFT JOIN ${this.bankAccountTable} as ba
-		ON tr.account_id = ba.id
-		WHERE user_id = ? AND DATEDIFF(day,date_time,GETDATE()) between 0 and ?
-		`;
-		const r = this.query({
-			sql,
-			values: [id, nr],
-		});
-		console.log(r);
-		return this.query({
-			sql,
-			values: [id, nr],
-		});
-	}
-	getLastTranzactionsSum(nr: number, id: number): Promise<any> {
-		console.log('db');
-		const sql = `
-		SELECT SUM(amount)
-		FROM ${this.transactionTable} as tr
-		LEFT JOIN ${this.bankAccountTable} as ba
-		ON tr.account_id = ba.id
-		WHERE user_id = ? AND DATEDIFF(day,date_time,GETDATE()) between 0 and ?
+		SELECT * FROM ${this.transactionTable} as tr
+		LEFT JOIN ${this.bankAccountTable} as bank
+		ON tr.account_id = bank.id
+		WHERE  (tr.date_time BETWEEN NOW() - INTERVAL ? DAY AND NOW()) AND (bank.user_id = ?);
 		`;
 		return this.query({
 			sql,
-			values: [id, nr],
+			values: [days, userId],
+		});
+	}
+	getLastTransactionsSum(days: number, userId: number): Promise<any> {
+		const sql = `
+		SELECT SUM(amount) FROM ${this.transactionTable} as tr
+		LEFT JOIN ${this.bankAccountTable} as bank
+		ON tr.account_id = bank.id
+		WHERE  (tr.date_time BETWEEN NOW() - INTERVAL ? DAY AND NOW()) AND (bank.user_id = ?);
+		`;
+		return this.query({
+			sql,
+			values: [days, userId],
 		});
 	}
 }

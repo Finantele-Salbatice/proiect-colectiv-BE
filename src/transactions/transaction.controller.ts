@@ -4,28 +4,26 @@ import { ITransactionsListRequest } from 'src/requests/TransactionsTestRequest';
 import { StatisticsRequest } from 'src/requests/StatisticsRequest';
 import { TransactionService } from './transaction.service';
 
-@Controller('transactions')
+@Controller('/transactions')
 export class TransactionController {
 	constructor(private readonly service: TransactionService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('test')
+	@Post('/test')
 	test(@Request() req: ITransactionsListRequest): void {
 		console.log(req.body);
 		console.log(req.user);
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('statistics')
+	@Post('/statistics')
 	tranzactionsList(@Request() req: StatisticsRequest): Promise<any> {
-		console.log('controler');
-		return this.service.lastTranzactions(req.body.lastDays,req.user.userId);
+		return this.service.lastTransactions(req.body.lastDays, req.user.userId);
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('statisticsAmount')
+	@Post('/statisticsAmount')
 	transactionAmount(@Request() req: StatisticsRequest): Promise<any> {
-		console.log('controler');
-		return this.service.lastTranzactionsAmount(req.body.lastDays,req.user.userId);
+		return this.service.lastTransactionsAmount(req.body.lastDays, req.user.userId);
 	}
 }

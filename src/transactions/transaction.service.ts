@@ -1,30 +1,26 @@
-import { NotFoundException } from '@nestjs/common';
+import { ITransaction } from './models/Transactions';
 import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { TransactionGateway } from './transaction.gateway';
 
 @Injectable()
 export class TransactionService {
+
 	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {}
-	async lastTranzactions(nr: number, id: number): Promise<any> {
-		console.log('service');
-		const [result] = await this.gateway.getLastTranzactions(nr,id);
+
+	async lastTransactions(days: number, userId: number): Promise<ITransaction[]> {
+		const result = await this.gateway.getLastTransactions(days,userId);
 		if (!result) {
-			throw new NotFoundException('Tranzactions not found!');
+			return [];
 		}
-		return result;
+		const rez = [result[0], result[1], result[2], result[3], result[4]];
+		return rez;
 	}
-	async lastTranzactionsAmount(nr: number, id: number): Promise<any>  {
-		console.log('service2');
-		const [result] = await this.gateway.getLastTranzactionsSum(nr,id);
-		let sum = 0;
-		for (const t of result) {
-			console.log(t);
-			sum += t.amount;
+	async lastTransactionsAmount(days: number, userId: number): Promise<number>  {
+		const [result] = await this.gateway.getLastTransactionsSum(days,userId);
+		if (!result['SUM(amount)']) {
+			return 0;
 		}
-		if (sum !== 0) {
-			throw new NotFoundException('Tranzactions amount not found!');
-		}
-		return sum;
+		return result['SUM(amount)'];
 	}
 }
