@@ -273,6 +273,8 @@ export class AccountService {
 					currency: trans.transactionAmount.currency,
 					transaction_id: trans.transactionId,
 					beneficiary: trans.creditorName,
+					date_time: trans.valueDate,
+					details: trans.details,
 				};
 				await this.transactionService.insertTransaction(insertTransaction);
 			}));
