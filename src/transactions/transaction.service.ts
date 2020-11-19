@@ -8,7 +8,6 @@ export class TransactionService {
 	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {
 	}
 	async filterTransactions(body: ITransactionsListFilters, userId: number): Promise<any> {
-		console.log(userId);
 		if (!userId) {
 			throw new NotFoundException('Invalid userId');
 		}
