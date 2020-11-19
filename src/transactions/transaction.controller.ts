@@ -17,7 +17,7 @@ export class TransactionController {
 
 	@UseGuards(JwtAuthGuard)
 	@Post('/statistics')
-	tranzactionsList(@Request() req: StatisticsRequest): Promise<any> {
+	transactionList(@Request() req: StatisticsRequest): Promise<any> {
 		return this.service.lastTransactions(req.body.lastDays, req.user.userId);
 	}
 

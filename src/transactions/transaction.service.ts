@@ -17,6 +17,6 @@ export class TransactionService {
 	}
 	async lastTransactionsAmount(days: number, userId: number): Promise<number>  {
 		const [result] = await this.gateway.getLastTransactionsSum(days,userId);
-		return result['amount'];
+		return result.amount;
 	}
 }
