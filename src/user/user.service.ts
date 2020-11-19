@@ -122,6 +122,9 @@ export class UserService {
 		if (user.last_name === '') {
 			throw new UnprocessableEntityException('Last name is empty!');
 		}
+		if (user.password === '') {
+			throw new UnprocessableEntityException('Password name is empty!');
+		}
 		if (user.email === '') {
 			throw new UnprocessableEntityException('Email is empty!');
 		}
