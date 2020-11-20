@@ -176,11 +176,13 @@ export class AccountService {
 			accounts[accountId] = account;
 		}
 
-		for (const key in accounts) {
-			const acc = accounts[key];
-			const newId = await this.insertBankAccount(acc);
-			await this.syncBTAccount(newId);
-		}
+		const accArray = Object.values(accounts);
+
+		await Promise.all(
+			accArray.map(async acc => {
+				const newId = await this.insertBankAccount(acc);
+				await this.syncBTAccount(newId);
+			}));
 	}
 
 	async handleBTCallback(request: IBTCallback): Promise<void> {
