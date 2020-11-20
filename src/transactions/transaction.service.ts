@@ -1,7 +1,8 @@
+import { ITransaction } from './models/Transactions';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ITransactionsListFilters } from 'src/requests/TransactionsTestRequest';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { TransactionGateway } from './transaction.gateway';
+import { ITransactionsListFilters } from 'src/requests/TransactionsListRequest';
 
 @Injectable()
 export class TransactionService {
@@ -28,5 +29,18 @@ export class TransactionService {
 		return res;
 	}
 
+	async insertTransaction(transaction: ITransaction): Promise<any> {
+		await this.gateway.insertTransaction(transaction);
+	}
+	async lastTransactions(days: number, userId: number): Promise<ITransaction[]> {
+		const result = await this.gateway.getLastTransactions(days,userId);
+		if (!result) {
+			return [];
+		}
+		return result;
+	}
+	async lastTransactionsAmount(days: number, userId: number): Promise<number>  {
+		const [result] = await this.gateway.getLastTransactionsSum(days,userId);
+		return result.amount;
+	}
 }
-

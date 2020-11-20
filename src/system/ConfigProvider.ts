@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 
 @Injectable()
 export class ConfigProvider {
-	config: IConfig;
+	private config: IConfig;
 	constructor() {
 		config();
 		this.config = process.env as any as IConfig;

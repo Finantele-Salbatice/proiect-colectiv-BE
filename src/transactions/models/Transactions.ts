@@ -1,15 +1,17 @@
 
 export interface ITransaction {
   id?: number;
-  transactionId?: number;
+  transaction_id?: number;
   amount?: number;
   currency?: number;
   details?: string;
-  dateTime?: Date;
+  date_time?: Date;
   account_id?: number;
+  status?: string;
   beneficiary?: string;
   type?: ITransactionDirection;
   additional_data?: string;
+  raw_data?: string;
   created_at?: Date;
 }
 

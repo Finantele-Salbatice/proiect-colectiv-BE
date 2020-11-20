@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Database } from 'src/system/database';
 import { ConfigProvider } from 'src/system/ConfigProvider';
-import { ITransactionsListFilters } from 'src/requests/TransactionsTestRequest';
+import { Database } from 'src/system/database';
+import { ITransactionsListFilters } from 'src/requests/TransactionsListRequest';
 import * as moment from 'moment';
+import { ITransaction } from './models/Transactions';
 
 const defaultLimit = 20;
 const defaultSkip = 0;
@@ -14,9 +15,11 @@ const defaultOrderList = ['asc', 'desc'];
 @Injectable()
 export class TransactionGateway extends Database {
 	transactionsTable: string;
+	bankAccountsTable: string;
 	constructor(configProvider: ConfigProvider) {
 		super(configProvider);
 		this.transactionsTable = 'transactions';
+		this.bankAccountsTable = 'bank_accounts';
 	}
 
 	getTransactionsWithFilters(userId: number, filters: ITransactionsListFilters): Promise<any> {
@@ -105,6 +108,43 @@ export class TransactionGateway extends Database {
 		const sql2 = sql.toQuery().toString();
 		return this.query({
 			sql:sql2,
+		});
+	}
+
+	getLastTransactions(days: number, userId: number): Promise<any> {
+		const sql = `
+		SELECT * FROM ${this.transactionsTable} as tr
+		LEFT JOIN ${this.bankAccountsTable} as bank
+		ON tr.account_id = bank.id
+		WHERE (tr.date_time > NOW() - INTERVAL ? DAY) AND bank.user_id = ?
+		LIMIT 5;
+		`;
+		return this.query({
+			sql,
+			values: [days, userId],
+		});
+	}
+	getLastTransactionsSum(days: number, userId: number): Promise<any> {
+		const sql = `
+		SELECT coalesce(SUM(amount), 0) as amount FROM ${this.transactionsTable} as tr
+		LEFT JOIN ${this.bankAccountsTable} as bank
+		ON tr.account_id = bank.id
+		WHERE (tr.date_time > NOW() - INTERVAL ? DAY) AND bank.user_id = ?;
+		`;
+		return this.query({
+			sql,
+			values: [days, userId],
+		});
+	}
+
+	insertTransaction(transaction: ITransaction): Promise<any> {
+		const sql = `
+		INSERT IGNORE INTO ${this.transactionsTable} SET ?;
+		`;
+
+		return this.query({
+			sql,
+			values: [transaction],
 		});
 	}
 }
