@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Database } from 'src/system/database';
 import { ConfigProvider } from 'src/system/ConfigProvider';
+import { Database } from 'src/system/database';
+import { ITransaction } from './models/Transactions';
 
 @Injectable()
 export class TransactionGateway extends Database {
@@ -34,6 +35,17 @@ export class TransactionGateway extends Database {
 		return this.query({
 			sql,
 			values: [days, userId],
+		});
+	}
+
+	insertTransaction(transaction: ITransaction): Promise<any> {
+		const sql = `
+		INSERT IGNORE INTO ${this.transactionTable} SET ?;
+		`;
+
+		return this.query({
+			sql,
+			values: [transaction],
 		});
 	}
 }

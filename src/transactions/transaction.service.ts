@@ -5,9 +5,12 @@ import { TransactionGateway } from './transaction.gateway';
 
 @Injectable()
 export class TransactionService {
+	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {
+	}
 
-	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {}
-
+	async insertTransaction(transaction: ITransaction): Promise<any> {
+		await this.gateway.insertTransaction(transaction);
+	}
 	async lastTransactions(days: number, userId: number): Promise<ITransaction[]> {
 		const result = await this.gateway.getLastTransactions(days,userId);
 		if (!result) {
