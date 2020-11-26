@@ -72,8 +72,14 @@ export class AccountService {
 		return this.createBTForm(acc);
 	}
 
-	async insertBankAccount(account: IBankAccount): Promise<any> {
-		return this.gateway.addAccount(account);
+	/**
+   *
+   * @param account
+   * @returns inserted entity id
+   */
+	async insertBankAccount(account: IBankAccount): Promise<number> {
+		const result = await this.gateway.addAccount(account);
+		return result.insertId;
 	}
 
 	sha256(buffer: string): Buffer {
@@ -170,10 +176,13 @@ export class AccountService {
 			accounts[accountId] = account;
 		}
 
-		for (const key in accounts) {
-			const acc = accounts[key];
-			await this.insertBankAccount(acc);
-		}
+		const accArray = Object.values(accounts);
+
+		await Promise.all(
+			accArray.map(async acc => {
+				const newId = await this.insertBankAccount(acc);
+				await this.syncBTAccount(newId);
+			}));
 	}
 
 	async handleBTCallback(request: IBTCallback): Promise<void> {

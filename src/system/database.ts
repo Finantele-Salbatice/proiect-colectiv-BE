@@ -2,6 +2,7 @@ import { createPool, Pool, PoolConfig, PoolConnection, QueryOptions } from 'mysq
 import { IConfig } from './Config';
 import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from './ConfigProvider';
+import * as Knex from 'knex';
 
 const dbConfig = (env: IConfig): PoolConfig => ({
 	host: env.DB_HOST,
@@ -18,9 +19,17 @@ const dbConfig = (env: IConfig): PoolConfig => ({
 
 @Injectable()
 export class Database {
-	connection: Pool;
+	private connection: Pool;
+	private knex: Knex;
 	constructor(private configProvider: ConfigProvider) {
-		this.connection = createPool(dbConfig(this.configProvider.getConfig()));
+		const conf = dbConfig(this.configProvider.getConfig());
+		this.connection = createPool(conf);
+		this.knex = Knex({
+			client: 'mysql',
+		});
+	}
+	get queryBuilder(): Knex {
+		return this.knex;
 	}
 
 	async getConnection(): Promise<PoolConnection> {
@@ -33,7 +42,6 @@ export class Database {
 			});
 		});
 	}
-
 	async query(options: QueryOptions): Promise<any> {
 		const conn = await this.getConnection();
 		const promise = new Promise((resolve, reject) => {
@@ -48,4 +56,6 @@ export class Database {
 		});
 		return promise;
 	}
+
 }
+
