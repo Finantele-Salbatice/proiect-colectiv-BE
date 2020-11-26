@@ -345,5 +345,11 @@ export class AccountService {
 			}
 		}
 	}
+
+	async getAllByUser(userId: number): Promise<IBankAccount[]> {
+		const results = await this.gateway.getAccountsByUser(userId);
+
+		return results;
+	}
 }
 

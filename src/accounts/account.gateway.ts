@@ -48,6 +48,18 @@ export class AccountGateway extends Database {
 		});
 	}
 
+	getAccountsByUser(userId: number): Promise<any> {
+		const sql = `
+			SELECT * FROM ${this.bankAccountTable}
+			WHERE user_id = ?;
+		`;
+
+		return this.query({
+			sql,
+			values: [userId],
+		});
+	}
+
 	getOauthById(id: number): Promise<any> {
 		const sql = `
 			SELECT * FROM ${this.oauthTable}

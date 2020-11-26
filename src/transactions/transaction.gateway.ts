@@ -9,7 +9,7 @@ const defaultLimit = 20;
 const defaultSkip = 0;
 const defaultOrderBy = 'id';
 const defaultOrderByList = ['amount', 'date_time'];
-const defaultOrder = 'asc';
+const defaultOrder = 'desc';
 const defaultOrderList = ['asc', 'desc'];
 
 @Injectable()

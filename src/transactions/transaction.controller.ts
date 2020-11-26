@@ -9,13 +9,6 @@ export class TransactionController {
 	constructor(private readonly service: TransactionService) {}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('test')
-	test(@Request() req: ITransactionsListRequest): void {
-		console.log(req.body);
-		console.log(req.user);
-	}
-
-	@UseGuards(JwtAuthGuard)
 	@Post('list')
 	filter(@Request() req: ITransactionsListRequest): Promise<any> {
 		return this.service.filterTransactions(req.body, req.user.userId);

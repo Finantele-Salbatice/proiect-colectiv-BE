@@ -4,6 +4,7 @@ import { IAccountAdd } from 'src/requests/AccountAdd';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
 import { AccountService } from './account.service';
+import { IBankAccount } from './models/Account';
 
 @Controller('account')
 export class AccountController {
@@ -24,5 +25,11 @@ export class AccountController {
 	@Post('sync')
 	async syncAccount(@Request() req: ISyncAccountRequest): Promise<void> {
 		await this.service.syncBTAccount(req.body.accountId);
+	}
+
+  @UseGuards(JwtAuthGuard)
+	@Post('list')
+	async accountsList(@Request() req: ISyncAccountRequest): Promise<IBankAccount[]> {
+		return this.service.getAllByUser(req.user.userId);
 	}
 }
