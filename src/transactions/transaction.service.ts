@@ -24,8 +24,11 @@ export class TransactionService {
 			limit: body.limit,
 		};
 		const result = await this.gateway.getTransactionsWithFilters(userId, filter);
-		const result2 = await this.gateway.getTransactionsCountWithFilters(userId, filter);
-		const res = [JSON.parse(JSON.stringify(result)), result2[0].count];
+		const [result2] = await this.gateway.getTransactionsCountWithFilters(userId, filter);
+		const res = {
+			data: result,
+			count: result2.count,
+		};
 		return res;
 	}
 
