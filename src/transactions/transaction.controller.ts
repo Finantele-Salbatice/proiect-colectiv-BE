@@ -16,13 +16,18 @@ export class TransactionController {
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/statistics')
+	@Post('list')
+	filter(@Request() req: ITransactionsListRequest): Promise<any> {
+		return this.service.filterTransactions(req.body, req.user.userId);
+	}
+
+	@Post('statistics')
 	transactionList(@Request() req: StatisticsRequest): Promise<any> {
 		return this.service.lastTransactions(req.body.lastDays, req.user.userId);
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('/statisticsAmount')
+	@Post('statisticsAmount')
 	transactionAmount(@Request() req: StatisticsRequest): Promise<any> {
 		return this.service.lastTransactionsAmount(req.body.lastDays, req.user.userId);
 	}

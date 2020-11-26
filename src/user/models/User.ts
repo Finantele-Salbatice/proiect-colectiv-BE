@@ -10,6 +10,6 @@ export interface User {
   created_at?: Date;
 }
 
-export interface Token{
+export interface TokenResponse{
   token: string;
 }
