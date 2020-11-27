@@ -13,6 +13,7 @@ export class TransactionController {
 	filter(@Request() req: ITransactionsListRequest): Promise<any> {
 		return this.service.filterTransactions(req.body, req.user.userId);
 	}
+	//caca
 
 	@Post('statistics')
 	transactionList(@Request() req: StatisticsRequest): Promise<any> {
