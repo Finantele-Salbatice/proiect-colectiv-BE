@@ -2,6 +2,7 @@ import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { IAccountAdd } from 'src/requests/AccountAdd';
 import { IBTCallback } from 'src/requests/BTCallback';
+import { IBRDCallback } from 'src/requests/BRDCallback';
 import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
 import { AccountService } from './account.service';
 import { IBankAccount } from './models/Account';
@@ -19,6 +20,11 @@ export class AccountController {
 	@Post('btcallback')
 	async btcallback(@Body() body: IBTCallback): Promise<void> {
 		await this.service.handleBTCallback(body);
+	}
+
+	@Post('brdcallback')
+	async brdcallback(@Body() body: IBRDCallback): Promise<void> {
+		await this.service.handleBRDCallback(body);
 	}
 
 	@UseGuards(JwtAuthGuard)

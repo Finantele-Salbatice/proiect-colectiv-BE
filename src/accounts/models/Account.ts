@@ -20,7 +20,8 @@ export interface IBankAccount {
 }
 
 export enum EnumBanks {
-  BT = 'bt'
+  BT = 'bt',
+  BRD = 'brd'
 }
 
 export enum EnumBankAccountStatus {
