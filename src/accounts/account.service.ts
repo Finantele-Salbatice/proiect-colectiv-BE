@@ -5,11 +5,9 @@ import { EnumBankAccountStatus, EnumBanks, IBankAccount } from './models/Account
 import { randomBytes, createHash } from 'crypto';
 import { AxiosRequestConfig } from 'axios';
 import { IBTCallback } from 'src/requests/BTCallback';
-import { IBRDCallback } from 'src/requests/BRDCallback';
 import { stringify } from 'querystring';
 import { IOauth } from './models/Oauth';
 import { IBTOauthResponse } from './models/BTOauth';
-import { IBRDOauthResponse } from './models/BRDOauth';
 import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
@@ -23,9 +21,12 @@ export class AccountService {
 	async addAcount(userId: number, bank: EnumBanks): Promise<string> {
 		if (bank === EnumBanks.BT) {
 			return this.createBTOauth(userId);
-		} else if (bank === EnumBanks.BRD) {
-			return this.createBRDOauth(userId);
 		}
+	}
+
+	async addAcountBRD(userId: number): Promise<string> {
+		//console.log('aici');
+		return this.createBRDOauth(userId);
 	}
 
 	get BT_CLIENT_SECRET(): string {
@@ -60,16 +61,16 @@ export class AccountService {
 		return this.configProvider.getConfig().BRD_CLIENT_SECRET;
 	}
 
-	get BRD_FORM_URL(): string {
-		return this.configProvider.getConfig().BRD_FORM_URL;
-	}
-
 	get BRD_CLIENT_ID(): string {
 		return this.configProvider.getConfig().BRD_CLIENT_ID;
 	}
 
 	get BRD_CONSENT_ID(): string {
 		return this.configProvider.getConfig().BRD_CONSENT_ID;
+	}
+
+	get BRD_CONSENT_URL(): string {
+		return this.configProvider.getConfig().BRD_CONSENT_URL;
 	}
 
 	get BRD_TOKEN_URL(): string {
@@ -100,17 +101,61 @@ export class AccountService {
 		return this.createBTForm(acc);
 	}
 
-	async createBRDOauth(userId: number): Promise<string> {
+	async createBRDOauth(userId: number): Promise<any> {
+		const axios = this.httpService.axiosRef;
+		let data;
+		try {
+			const result = await axios.post(this.BRD_CONSENT_URL, {
+				access: {
+					'allPsd2': 'allAccounts',
+				},
+				recurringIndicator: true,
+				validUntil: '2020-12-31',
+				frequencyPerDay: 4,
+				combinedServiceIndicator: false,
+			},
+			{
+				headers: {
+					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+					'PSU-ID': '13333330',
+					'PSU-IP-Address': '192.168.0.121',
+				},//am pus ipul meu temporar
+			});
+			data = result.data;
+			console.log(data.consentId);
+		} catch (err) {
+			console.log(err);
+		}
 		const verifier = this.base64URLEncode(randomBytes(32));
 		const acc: IOauth = {
 			user_id: userId,
 			bank: EnumBanks.BRD,
 			status: EnumBankAccountStatus.inProgess,
+			access_token: data.consentId,
 			code_verifier: verifier,
 		};
 		const result = await this.gateway.addOauth(acc);
 		acc.id = result.insertId;
-		return this.createBRDForm(acc);
+		return this.HandleBRDAccounts(acc);
+	}
+
+	//--------------de adus tranzactiile in db folosind consent
+	async HandleBRDAccounts(acc: IOauth): Promise<void> {
+		const axios = this.httpService.axiosRef;
+		try {
+			const result = await axios.get(this.BRD_ACCOUNTS_URL, {
+				headers: {
+					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+					'Consent-ID': acc.access_token,
+					'content-type': 'application/json',
+				},
+			});
+			const data = result.data;
+			console.log(data);
+			//await this.handleBTCallbackData(data, oauth.user_id);
+		} catch (err) {
+			console.log(err);
+		}
 	}
 
 	/**
@@ -137,25 +182,6 @@ export class AccountService {
 				client_id: this.BT_CLIENT_ID,
 				redirect_uri: `${this.UI_HOST}/addBTAccount`,
 				scope: `AIS:${this.BT_CONSENT_ID}`,
-				state: acc.id,
-				code_challenge: codeChallange,
-				code_challenge_method: 'S256',
-			},
-		};
-		const url = ref.getUri(config);
-		return url;
-	}
-	createBRDForm(acc: IBankAccount): string {
-		const codeChallange = this.base64URLEncode(this.sha256(acc.code_verifier));
-		const ref = this.httpService.axiosRef;
-
-		const config: AxiosRequestConfig = {
-			url: this.BRD_FORM_URL,
-			params: {
-				response_type: 'code',
-				client_id: this.BRD_CLIENT_ID,
-				redirect_uri: `${this.UI_HOST}/addBRDAccount`,
-				scope: `AIS:${this.BRD_CONSENT_ID}`,
 				state: acc.id,
 				code_challenge: codeChallange,
 				code_challenge_method: 'S256',
@@ -245,70 +271,6 @@ export class AccountService {
 			}));
 	}
 
-	async handleBRDCallbackData(data: IBRDOauthResponse, userId: number): Promise<void> {
-		const accountsCount = +data.accounts_count;
-		const transactionsCount = +data.transactions_count;
-		const balancesCount = +data.balances_count;
-		const accounts: Record<string, IBankAccount> = {
-		};
-		for (let i = 0; i < accountsCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BRD,
-			};
-			const currentAcc = `accounts_${i}`;
-			const accountId = data[currentAcc];
-			account.iban = accountId;
-			accounts[accountId] = account;
-		}
-
-		for (let i = 0; i < transactionsCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BRD,
-			};
-			const currentTran = `transactions_${i}`;
-			const accountId = data[currentTran];
-			if (accounts[accountId]) {
-				accounts[accountId].transaction_see = accountId;
-				continue;
-			}
-			account.iban = accountId;
-			account.transaction_see = accountId;
-			accounts[accountId] = account;
-		}
-
-		for (let i = 0; i < balancesCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BRD,
-			};
-			const currentBalance = `balances_${i}`;
-			const accountId = data[currentBalance];
-			if (accounts[accountId]) {
-				accounts[accountId].balance_see = accountId;
-				continue;
-			}
-			account.iban = accountId;
-			account.balance_see = accountId;
-			accounts[accountId] = account;
-		}
-
-		const accArray = Object.values(accounts);
-
-		await Promise.all(
-			accArray.map(async acc => {
-				const newId = await this.insertBankAccount(acc);
-				await this.syncBRDAccount(newId);
-			}));
-	}
-
 	async handleBTCallback(request: IBTCallback): Promise<void> {
 		const id = +request.state;
 		const oauth = await this.getOauthById(id);
@@ -330,31 +292,6 @@ export class AccountService {
 			});
 			const data = result.data;
 			await this.handleBTCallbackData(data, oauth.user_id);
-		} catch (err) {
-			console.log(err);
-		}
-	}
-
-	async handleBRDCallback(request: IBRDCallback): Promise<void> {
-		const id = +request.state;
-		const oauth = await this.getOauthById(id);
-		const body = {
-			redirect_uri: `${this.UI_HOST}/addBRDAccount`,
-			client_id: this.BRD_CLIENT_ID,
-			code_verifier: oauth.code_verifier,
-		};
-
-		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.post(this.BRD_FORM_URL + '/accounts', stringify(body), {
-				headers: {
-					'content-type': 'application/json',
-					'consent-id': '800000022',
-					'x-request-id': '99391c7e-ad88-49ec-a2ad-99ddcb1f7721',
-				},
-			});
-			const data = result.data;
-			await this.handleBRDCallbackData(data, oauth.user_id);
 		} catch (err) {
 			console.log(err);
 		}

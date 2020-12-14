@@ -25,4 +25,5 @@ export interface IConfig {
   BRD_CONSENT_ID: string;
   BRD_TOKEN_URL: string;
   BRD_ACCOUNTS_URL: string;
+  BRD_CONSENT_URL: string;
 }
