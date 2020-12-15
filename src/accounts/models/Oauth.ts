@@ -11,7 +11,8 @@ export interface IOauth {
 }
 
 export enum EnumBanks {
-  BT = 'bt'
+  BT = 'bt',
+  BCR = 'bcr'
 }
 
 export enum EnumBankAccountStatus {

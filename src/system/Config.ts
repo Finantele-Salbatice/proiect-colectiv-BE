@@ -19,4 +19,7 @@ export interface IConfig {
   BT_CONSENT_ID: string;
   BT_TOKEN_URL: string;
   BT_ACCOUNTS_URL: string;
+  BCR_FORM_URL: string;
+  BCR_CLIENT_ID: string;
+  BCR_CLIENT_SECRET: string;
 }

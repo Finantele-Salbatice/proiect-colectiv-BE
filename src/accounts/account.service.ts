@@ -8,6 +8,7 @@ import { IBTCallback } from 'src/requests/BTCallback';
 import { stringify } from 'querystring';
 import { IOauth } from './models/Oauth';
 import { IBTOauthResponse } from './models/BTOauth';
+import { IBCROauthResponse } from './models/BCROauth';
 import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
@@ -22,6 +23,10 @@ export class AccountService {
 		if (bank === EnumBanks.BT) {
 			return this.createBTOauth(userId);
 		}
+		if (bank === EnumBanks.BCR) {
+			return this.createBCROauth(userId);
+		}
+
 	}
 
 	get BT_CLIENT_SECRET(): string {
@@ -52,6 +57,16 @@ export class AccountService {
 		return this.configProvider.getConfig().BT_ACCOUNTS_URL;
 	}
 
+	get BCR_CLIENT_ID(): string {
+		return this.configProvider.getConfig().BCR_CLIENT_ID;
+	}
+	get BCR_FORM_URL(): string {
+		return this.configProvider.getConfig().BCR_FORM_URL;
+	}
+	get BCR_CLIENT_SECRET(): string {
+		return this.configProvider.getConfig().BCR_CLIENT_SECRET;
+	}
+
 	base64URLEncode(str: Buffer): string {
 		return str.toString('base64')
 			.replace(/\+/g, '-')
@@ -70,6 +85,19 @@ export class AccountService {
 		const result = await this.gateway.addOauth(acc);
 		acc.id = result.insertId;
 		return this.createBTForm(acc);
+	}
+
+	async createBCROauth(userId: number): Promise<string> {
+		const verifier = this.base64URLEncode(randomBytes(32));
+		const acc: IOauth = {
+			user_id: userId,
+			bank: EnumBanks.BCR,
+			status: EnumBankAccountStatus.inProgess,
+			code_verifier: verifier,
+		};
+		const result = await this.gateway.addOauth(acc);
+		acc.id = result.insertId;
+		return this.createBCRForm(acc);
 	}
 
 	/**
@@ -99,6 +127,22 @@ export class AccountService {
 				state: acc.id,
 				code_challenge: codeChallange,
 				code_challenge_method: 'S256',
+			},
+		};
+		const url = ref.getUri(config);
+		return url;
+	}
+
+	createBCRForm(acc: IBankAccount): string {
+		const ref = this.httpService.axiosRef;
+		const config: AxiosRequestConfig = {
+			url: this.BCR_FORM_URL,
+			params: {
+				response_type: 'code',
+				access_type: 'offline',
+				client_id: this.BCR_CLIENT_ID,
+				redirect_uri: `${this.UI_HOST}/bcrsandbox`,
+				state: acc.id,
 			},
 		};
 		const url = ref.getUri(config);
@@ -184,6 +228,69 @@ export class AccountService {
 				await this.syncBTAccount(newId);
 			}));
 	}
+	async handleBCRCallbackData(data: IBCROauthResponse, userId: number): Promise<void> {
+		const accountsCount = +data.accounts_count;
+		const transactionsCount = +data.transactions_count;
+		const balancesCount = +data.balances_count;
+		const accounts: Record<string, IBankAccount> = {
+		};
+		for (let i = 0; i < accountsCount; i++) {
+			const account: IBankAccount = {
+				user_id: userId,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+				bank: EnumBanks.BCR,
+			};
+			const currentAcc = `accounts_${i}`;
+			const accountId = data[currentAcc];
+			account.iban = accountId;
+			accounts[accountId] = account;
+		}
+
+		for (let i = 0; i < transactionsCount; i++) {
+			const account: IBankAccount = {
+				user_id: userId,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+				bank: EnumBanks.BCR,
+			};
+			const currentTran = `transactions_${i}`;
+			const accountId = data[currentTran];
+			if (accounts[accountId]) {
+				accounts[accountId].transaction_see = accountId;
+				continue;
+			}
+			account.iban = accountId;
+			account.transaction_see = accountId;
+			accounts[accountId] = account;
+		}
+
+		for (let i = 0; i < balancesCount; i++) {
+			const account: IBankAccount = {
+				user_id: userId,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+				bank: EnumBanks.BCR,
+			};
+			const currentBalance = `balances_${i}`;
+			const accountId = data[currentBalance];
+			if (accounts[accountId]) {
+				accounts[accountId].balance_see = accountId;
+				continue;
+			}
+			account.iban = accountId;
+			account.balance_see = accountId;
+			accounts[accountId] = account;
+		}
+
+		const accArray = Object.values(accounts);
+
+		await Promise.all(
+			accArray.map(async acc => {
+				const newId = await this.insertBankAccount(acc);
+				await this.syncBCRAccount(newId);
+			}));
+	}
 
 	async handleBTCallback(request: IBTCallback): Promise<void> {
 		const id = +request.state;
@@ -196,7 +303,6 @@ export class AccountService {
 			client_secret: this.BT_CLIENT_SECRET,
 			code_verifier: oauth.code_verifier,
 		};
-
 		const axios = this.httpService.axiosRef;
 		try {
 			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
@@ -300,6 +406,52 @@ export class AccountService {
 	}
 
 	async syncBTAccount(accountId: number): Promise<void> {
+		const account = await this.getAccountById(accountId);
+		if (moment(account.token_expires_at).isBefore(new Date())) {
+			const token = await this.refreshBTOauthToken(account.id);
+			account.access_token = token;
+		}
+
+		const ref = this.httpService.axiosRef;
+
+		try {
+
+			const result = await ref.get(this.BT_ACCOUNTS_URL, {
+				params: {
+					withBalance: !!account.balance_see,
+				},
+				headers: {
+					authorization: `Bearer ${account.access_token}`,
+					'x-request-id': v4(),
+					'consent-id': this.BT_CONSENT_ID,
+					'psu-ip-address': '86.126.212.101',
+				},
+			});
+			const accounts: Array<any> = result.data.accounts;
+			await Promise.all(accounts.map(async acc => {
+				const iban = acc.iban;
+				const update: IBankAccount = {
+					currency: acc.currency,
+					account_id: acc.resourceId,
+					description: acc.name,
+					additional_data: JSON.stringify(acc),
+				};
+				if (acc.balances) {
+					const amount = acc.balances[0].balanceAmount.amount;
+					update.balance = amount;
+				}
+				await this.gateway.updateBankAccountByIban(update, iban);
+			}));
+			await this.getTransactionsByAccount(accountId);
+		} catch (err) {
+			if (err.response) {
+				console.log(err.response.data);
+			} else {
+				console.log(err);
+			}
+		}
+	}
+	async syncBCRAccount(accountId: number): Promise<void> {
 		const account = await this.getAccountById(accountId);
 		if (moment(account.token_expires_at).isBefore(new Date())) {
 			const token = await this.refreshBTOauthToken(account.id);
