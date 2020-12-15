@@ -5,11 +5,12 @@ import { BRDRequest } from 'src/requests/AuthRequest';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
 import { AccountService } from './account.service';
+import { AccountServiceBRD } from './account.serviceBRD';
 import { IBankAccount } from './models/Account';
 
 @Controller('account')
 export class AccountController {
-	constructor(private readonly service: AccountService) {}
+	constructor(private readonly service: AccountService, private readonly serviceBRD: AccountServiceBRD) {}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('add')
@@ -19,8 +20,7 @@ export class AccountController {
 
 	@Post('addBRD')
 	addAccountBRD(@Request() req: BRDRequest): Promise<string> {
-		console.log(req.body.userId);
-		return this.service.addAcountBRD(req.body.userId);
+		return this.serviceBRD.addAcountBRD(req.body.userId);
 	}
 
 	@Post('btcallback')

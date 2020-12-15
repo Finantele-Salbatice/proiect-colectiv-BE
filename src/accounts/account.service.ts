@@ -1,4 +1,4 @@
-import { Injectable, HttpService, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, HttpService, NotFoundException } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { AccountGateway } from './account.gateway';
 import { EnumBankAccountStatus, EnumBanks, IBankAccount } from './models/Account';
@@ -12,7 +12,6 @@ import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
 import { ITransaction } from 'src/transactions/models/Transactions';
-import { IBRDBalance } from './models/BRDBalance';
 
 @Injectable()
 export class AccountService {
@@ -23,11 +22,6 @@ export class AccountService {
 		if (bank === EnumBanks.BT) {
 			return this.createBTOauth(userId);
 		}
-	}
-
-	async addAcountBRD(userId: number): Promise<string> {
-		//console.log('aici');
-		return this.createBRDOauth(userId);
 	}
 
 	get BT_CLIENT_SECRET(): string {
@@ -58,30 +52,6 @@ export class AccountService {
 		return this.configProvider.getConfig().BT_ACCOUNTS_URL;
 	}
 
-	get BRD_CLIENT_SECRET(): string {
-		return this.configProvider.getConfig().BRD_CLIENT_SECRET;
-	}
-
-	get BRD_CLIENT_ID(): string {
-		return this.configProvider.getConfig().BRD_CLIENT_ID;
-	}
-
-	get BRD_CONSENT_ID(): string {
-		return this.configProvider.getConfig().BRD_CONSENT_ID;
-	}
-
-	get BRD_CONSENT_URL(): string {
-		return this.configProvider.getConfig().BRD_CONSENT_URL;
-	}
-
-	get BRD_TOKEN_URL(): string {
-		return this.configProvider.getConfig().BRD_TOKEN_URL;
-	}
-
-	get BRD_ACCOUNTS_URL(): string {
-		return this.configProvider.getConfig().BRD_ACCOUNTS_URL;
-	}
-
 	base64URLEncode(str: Buffer): string {
 		return str.toString('base64')
 			.replace(/\+/g, '-')
@@ -100,124 +70,6 @@ export class AccountService {
 		const result = await this.gateway.addOauth(acc);
 		acc.id = result.insertId;
 		return this.createBTForm(acc);
-	}
-
-	async createBRDOauth(userId: number): Promise<any> {
-		const axios = this.httpService.axiosRef;
-		let data;
-		try {
-			const result = await axios.post(this.BRD_CONSENT_URL, {
-				access: {
-					'allPsd2': 'allAccounts',
-				},
-				recurringIndicator: true,
-				validUntil: '2020-12-31',
-				frequencyPerDay: 4,
-				combinedServiceIndicator: false,
-			},
-			{
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'PSU-ID': '13333330',
-					'PSU-IP-Address': '192.168.0.121',
-				},//am pus ipul meu temporar
-			});
-			data = result.data;
-			console.log(data.consentId);
-		} catch (err) {
-			console.log(err);
-		}
-		const verifier = this.base64URLEncode(randomBytes(32));
-		const acc: IOauth = {
-			user_id: userId,
-			bank: EnumBanks.BRD,
-			status: EnumBankAccountStatus.inProgess,
-			access_token: data.consentId,
-			code_verifier: verifier,
-		};
-		const result = await this.gateway.addOauth(acc);
-		acc.id = result.insertId;
-		return this.handleBRDAccounts(acc);
-	}
-
-	//--------------de adus tranzactiile in db folosind consent
-	async handleBRDAccounts(acc: IOauth): Promise<void> {
-		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.get(this.BRD_ACCOUNTS_URL, {
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'Consent-ID': acc.access_token,
-					'content-type': 'application/json',
-				},
-			});
-			const data = result.data;
-			this.handleBRDData(acc, data.accounts);
-			console.log(data);
-			//await this.handleBTCallbackData(data, oauth.user_id);
-		} catch (err) {
-			console.log(err);
-		}
-	}
-
-	async handleBRDData(acc: IOauth, accounts: any): Promise<void> {
-		for (const account of accounts) {
-			const accountId = account.resourceId;
-			const balance = await this.getBalanceOfAccount(acc, accountId);
-			//const transactions = await this.getTransactionsOfAccount(acc, accountId);
-
-			const bankAccount: IBankAccount = {
-				user_id: acc.user_id,
-				bank: EnumBanks.BRD,
-				account_id: accountId,
-				iban: account.iban,
-				description: 'Cont BRD',
-				balance: balance.balanceAmount.amount,
-				currency: account.currency,
-				transaction_see: account.iban,
-				balance_see: account.iban,
-				synced_at: new Date(),
-				additional_data: JSON.stringify(account),
-			};
-			//trebuie fuctie de verificare??
-			//await this.verifyAccount(bankAccount);//verifica sa nu existe deja un cont cu
-			await this.gateway.addAccount(bankAccount);
-		}
-	}
-	async verifyAccount(acc: IBankAccount): Promise<void> {
-		const [result] = await this.gateway.getAccountsByUser(acc.user_id);
-
-		if (!result) {
-			return result;
-		} else {
-			if (result.account_id === acc.account_id) {
-				throw new UnprocessableEntityException('There is already a bank account with this id!');
-			}
-		}
-		return result;
-	}
-
-	async getBalanceOfAccount(acc: IOauth, accountId: number): Promise<IBRDBalance> {
-		const urlBalance = this.BRD_ACCOUNTS_URL + '/' + accountId + '/balances';
-		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.get(urlBalance, {
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'Consent-ID': acc.access_token,
-					'content-type': 'application/json',
-				},
-			});
-			const [data] = result.data.balances;
-			//const amount = data.balanceAmount.amount;
-			//const currency = data.balanceAmount.currency;
-			console.log(data);
-			return data;
-			//await this.handleBTCallbackData(data, oauth.user_id);
-		} catch (err) {
-			console.log('ufff');
-			console.log(err);
-		}
 	}
 
 	/**
@@ -466,53 +318,6 @@ export class AccountService {
 					authorization: `Bearer ${account.access_token}`,
 					'x-request-id': v4(),
 					'consent-id': this.BT_CONSENT_ID,
-					'psu-ip-address': '86.126.212.101',
-				},
-			});
-			const accounts: Array<any> = result.data.accounts;
-			await Promise.all(accounts.map(async acc => {
-				const iban = acc.iban;
-				const update: IBankAccount = {
-					currency: acc.currency,
-					account_id: acc.resourceId,
-					description: acc.name,
-					additional_data: JSON.stringify(acc),
-				};
-				if (acc.balances) {
-					const amount = acc.balances[0].balanceAmount.amount;
-					update.balance = amount;
-				}
-				await this.gateway.updateBankAccountByIban(update, iban);
-			}));
-			await this.getTransactionsByAccount(accountId);
-		} catch (err) {
-			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
-			}
-		}
-	}
-	async syncBRDAccount(accountId: number): Promise<void> {
-		const account = await this.getAccountById(accountId);
-		if (moment(account.token_expires_at).isBefore(new Date())) {
-			const token = await this.refreshBTOauthToken(account.id);
-			account.access_token = token;
-		}
-
-		const ref = this.httpService.axiosRef;
-
-		try {
-
-			const result = await ref.get(this.BRD_ACCOUNTS_URL, {
-				params: {
-					withBalance: !!account.balance_see,
-				},
-				headers: {
-					authorization: `Bearer ${account.access_token}`,
-					'content-type': 'application/json',
-					'consent-id': '800000022',
-					'x-request-id': '99391c7e-ad88-49ec-a2ad-99ddcb1f7721',
 					'psu-ip-address': '86.126.212.101',
 				},
 			});

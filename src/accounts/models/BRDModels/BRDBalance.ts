@@ -1,4 +1,4 @@
-export interface IBRDAmount {
+interface IBRDAmount {
     amount: number,
     currency: string,
 }
