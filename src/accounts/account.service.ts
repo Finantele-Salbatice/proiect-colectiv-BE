@@ -1,4 +1,4 @@
-import { Injectable, HttpService, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpService, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { AccountGateway } from './account.gateway';
 import { EnumBankAccountStatus, EnumBanks, IBankAccount } from './models/Account';
@@ -12,6 +12,7 @@ import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
 import { ITransaction } from 'src/transactions/models/Transactions';
+import { IBRDBalance } from './models/BRDBalance';
 
 @Injectable()
 export class AccountService {
@@ -136,11 +137,11 @@ export class AccountService {
 		};
 		const result = await this.gateway.addOauth(acc);
 		acc.id = result.insertId;
-		return this.HandleBRDAccounts(acc);
+		return this.handleBRDAccounts(acc);
 	}
 
 	//--------------de adus tranzactiile in db folosind consent
-	async HandleBRDAccounts(acc: IOauth): Promise<void> {
+	async handleBRDAccounts(acc: IOauth): Promise<void> {
 		const axios = this.httpService.axiosRef;
 		try {
 			const result = await axios.get(this.BRD_ACCOUNTS_URL, {
@@ -151,9 +152,70 @@ export class AccountService {
 				},
 			});
 			const data = result.data;
+			this.handleBRDData(acc, data.accounts);
 			console.log(data);
 			//await this.handleBTCallbackData(data, oauth.user_id);
 		} catch (err) {
+			console.log(err);
+		}
+	}
+
+	async handleBRDData(acc: IOauth, accounts: any): Promise<void> {
+		for (const account of accounts) {
+			const accountId = account.resourceId;
+			const balance = await this.getBalanceOfAccount(acc, accountId);
+			//const transactions = await this.getTransactionsOfAccount(acc, accountId);
+
+			const bankAccount: IBankAccount = {
+				user_id: acc.user_id,
+				bank: EnumBanks.BRD,
+				account_id: accountId,
+				iban: account.iban,
+				description: 'Cont BRD',
+				balance: balance.balanceAmount.amount,
+				currency: account.currency,
+				transaction_see: account.iban,
+				balance_see: account.iban,
+				synced_at: new Date(),
+				additional_data: JSON.stringify(account),
+			};
+			//trebuie fuctie de verificare??
+			//await this.verifyAccount(bankAccount);//verifica sa nu existe deja un cont cu
+			await this.gateway.addAccount(bankAccount);
+		}
+	}
+	async verifyAccount(acc: IBankAccount): Promise<void> {
+		const [result] = await this.gateway.getAccountsByUser(acc.user_id);
+
+		if (!result) {
+			return result;
+		} else {
+			if (result.account_id === acc.account_id) {
+				throw new UnprocessableEntityException('There is already a bank account with this id!');
+			}
+		}
+		return result;
+	}
+
+	async getBalanceOfAccount(acc: IOauth, accountId: number): Promise<IBRDBalance> {
+		const urlBalance = this.BRD_ACCOUNTS_URL + '/' + accountId + '/balances';
+		const axios = this.httpService.axiosRef;
+		try {
+			const result = await axios.get(urlBalance, {
+				headers: {
+					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+					'Consent-ID': acc.access_token,
+					'content-type': 'application/json',
+				},
+			});
+			const [data] = result.data.balances;
+			//const amount = data.balanceAmount.amount;
+			//const currency = data.balanceAmount.currency;
+			console.log(data);
+			return data;
+			//await this.handleBTCallbackData(data, oauth.user_id);
+		} catch (err) {
+			console.log('ufff');
 			console.log(err);
 		}
 	}
