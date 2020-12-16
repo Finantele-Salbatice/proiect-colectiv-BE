@@ -19,12 +19,6 @@ export interface IConfig {
   BT_CONSENT_ID: string;
   BT_TOKEN_URL: string;
   BT_ACCOUNTS_URL: string;
-<<<<<<< Updated upstream
-  BCR_FORM_URL: string;
-  BCR_CLIENT_ID: string;
-  BCR_CLIENT_SECRET: string;
-=======
-<<<<<<< Updated upstream
   BRD_FORM_URL: string;
   BRD_CLIENT_ID: string;
   BRD_CLIENT_SECRET: string;
@@ -32,13 +26,10 @@ export interface IConfig {
   BRD_TOKEN_URL: string;
   BRD_ACCOUNTS_URL: string;
   BRD_CONSENT_URL: string;
-=======
   BCR_FORM_URL: string;
   BCR_CLIENT_ID: string;
   BCR_CLIENT_SECRET: string;
   BCR_TOKEN_URL: string;
   BCR_WEB_API_KEY: string;
   BCR_ACCOUNTS_URL: string;
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 }

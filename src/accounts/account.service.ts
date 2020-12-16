@@ -8,10 +8,6 @@ import { IBTCallback } from 'src/requests/BTCallback';
 import { stringify } from 'querystring';
 import { IOauth } from './models/Oauth';
 import { IBTOauthResponse } from './models/BTOauth';
-<<<<<<< Updated upstream
-import { IBCROauthResponse } from './models/BCROauth';
-=======
->>>>>>> Stashed changes
 import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
@@ -19,33 +15,15 @@ import { ITransaction } from 'src/transactions/models/Transactions';
 
 @Injectable()
 export class AccountService {
-	constructor(private gateway: AccountGateway, private configProvider: ConfigProvider, private httpService: HttpService, private transactionService: TransactionService) {
-	}
-
-	async addAcount(userId: number, bank: EnumBanks): Promise<string> {
-		if (bank === EnumBanks.BT) {
-			return this.createBTOauth(userId);
-		}
-		if (bank === EnumBanks.BCR) {
-			return this.createBCROauth(userId);
-		}
-
-	}
-
-	get BT_CLIENT_SECRET(): string {
-		return this.configProvider.getConfig().BT_CLIENT_SECRET;
-	}
-
-	get BT_FORM_URL(): string {
-		return this.configProvider.getConfig().BT_FORM_URL;
-	}
-
-	get BT_CLIENT_ID(): string {
-		return this.configProvider.getConfig().BT_CLIENT_ID;
-	}
-
-	get BT_CONSENT_ID(): string {
-		return this.configProvider.getConfig().BT_CONSENT_ID;
+	gateway: any;
+	configProvider: any;
+	httpService: any;
+	transactionService: any;
+	constructor(gateway: AccountGateway, configProvider: ConfigProvider, httpService: HttpService, transactionService: TransactionService) {
+		this.gateway = gateway;
+		this.configProvider = configProvider;
+		this.httpService = httpService;
+		this.transactionService = transactionService;
 	}
 
 	async addAcount(userId: number, bank: EnumBanks): Promise<string> {
@@ -82,19 +60,6 @@ export class AccountService {
 		return this.configProvider.getConfig().BT_ACCOUNTS_URL;
 	}
 
-<<<<<<< Updated upstream
-	get BCR_CLIENT_ID(): string {
-		return this.configProvider.getConfig().BCR_CLIENT_ID;
-	}
-	get BCR_FORM_URL(): string {
-		return this.configProvider.getConfig().BCR_FORM_URL;
-	}
-	get BCR_CLIENT_SECRET(): string {
-		return this.configProvider.getConfig().BCR_CLIENT_SECRET;
-	}
-
-=======
->>>>>>> Stashed changes
 	base64URLEncode(str: Buffer): string {
 		return str.toString('base64')
 			.replace(/\+/g, '-')
@@ -115,22 +80,6 @@ export class AccountService {
 		return this.createBTForm(acc);
 	}
 
-<<<<<<< Updated upstream
-	async createBCROauth(userId: number): Promise<string> {
-		const verifier = this.base64URLEncode(randomBytes(32));
-		const acc: IOauth = {
-			user_id: userId,
-			bank: EnumBanks.BCR,
-			status: EnumBankAccountStatus.inProgess,
-			code_verifier: verifier,
-		};
-		const result = await this.gateway.addOauth(acc);
-		acc.id = result.insertId;
-		return this.createBCRForm(acc);
-	}
-
-=======
->>>>>>> Stashed changes
 	/**
    *
    * @param account
@@ -164,25 +113,6 @@ export class AccountService {
 		return url;
 	}
 
-<<<<<<< Updated upstream
-	createBCRForm(acc: IBankAccount): string {
-		const ref = this.httpService.axiosRef;
-		const config: AxiosRequestConfig = {
-			url: this.BCR_FORM_URL,
-			params: {
-				response_type: 'code',
-				access_type: 'offline',
-				client_id: this.BCR_CLIENT_ID,
-				redirect_uri: `${this.UI_HOST}/bcrsandbox`,
-				state: acc.id,
-			},
-		};
-		const url = ref.getUri(config);
-		return url;
-	}
-
-=======
->>>>>>> Stashed changes
 	async getAccountById(id: number): Promise<IBankAccount> {
 		const [result] = await this.gateway.getAccountById(id);
 		if (!result) {
@@ -262,72 +192,6 @@ export class AccountService {
 				await this.syncBTAccount(newId);
 			}));
 	}
-<<<<<<< Updated upstream
-	async handleBCRCallbackData(data: IBCROauthResponse, userId: number): Promise<void> {
-		const accountsCount = +data.accounts_count;
-		const transactionsCount = +data.transactions_count;
-		const balancesCount = +data.balances_count;
-		const accounts: Record<string, IBankAccount> = {
-		};
-		for (let i = 0; i < accountsCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BCR,
-			};
-			const currentAcc = `accounts_${i}`;
-			const accountId = data[currentAcc];
-			account.iban = accountId;
-			accounts[accountId] = account;
-		}
-
-		for (let i = 0; i < transactionsCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BCR,
-			};
-			const currentTran = `transactions_${i}`;
-			const accountId = data[currentTran];
-			if (accounts[accountId]) {
-				accounts[accountId].transaction_see = accountId;
-				continue;
-			}
-			account.iban = accountId;
-			account.transaction_see = accountId;
-			accounts[accountId] = account;
-		}
-
-		for (let i = 0; i < balancesCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BCR,
-			};
-			const currentBalance = `balances_${i}`;
-			const accountId = data[currentBalance];
-			if (accounts[accountId]) {
-				accounts[accountId].balance_see = accountId;
-				continue;
-			}
-			account.iban = accountId;
-			account.balance_see = accountId;
-			accounts[accountId] = account;
-		}
-
-		const accArray = Object.values(accounts);
-
-		await Promise.all(
-			accArray.map(async acc => {
-				const newId = await this.insertBankAccount(acc);
-				await this.syncBCRAccount(newId);
-			}));
-	}
-=======
->>>>>>> Stashed changes
 
 	async handleBTCallback(request: IBTCallback): Promise<void> {
 		const id = +request.state;
@@ -358,11 +222,6 @@ export class AccountService {
 		await this.gateway.updateBankAccountById(bankAccount, id);
 	}
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 	async refreshBTOauthToken(accountId: number): Promise<string> {
 		const account = await this.getAccountById(accountId);
 		const body = {
@@ -493,58 +352,6 @@ export class AccountService {
 			}
 		}
 	}
-<<<<<<< Updated upstream
-	async syncBCRAccount(accountId: number): Promise<void> {
-		const account = await this.getAccountById(accountId);
-		if (moment(account.token_expires_at).isBefore(new Date())) {
-			const token = await this.refreshBTOauthToken(account.id);
-			account.access_token = token;
-		}
-
-		const ref = this.httpService.axiosRef;
-
-		try {
-
-			const result = await ref.get(this.BT_ACCOUNTS_URL, {
-				params: {
-					withBalance: !!account.balance_see,
-				},
-				headers: {
-					authorization: `Bearer ${account.access_token}`,
-					'x-request-id': v4(),
-					'consent-id': this.BT_CONSENT_ID,
-					'psu-ip-address': '86.126.212.101',
-				},
-			});
-			const accounts: Array<any> = result.data.accounts;
-			await Promise.all(accounts.map(async acc => {
-				const iban = acc.iban;
-				const update: IBankAccount = {
-					currency: acc.currency,
-					account_id: acc.resourceId,
-					description: acc.name,
-					additional_data: JSON.stringify(acc),
-				};
-				if (acc.balances) {
-					const amount = acc.balances[0].balanceAmount.amount;
-					update.balance = amount;
-				}
-				await this.gateway.updateBankAccountByIban(update, iban);
-			}));
-			await this.getTransactionsByAccount(accountId);
-		} catch (err) {
-			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
-			}
-		}
-	}
-
-=======
-
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 	async getAllByUser(userId: number): Promise<IBankAccount[]> {
 		const results = await this.gateway.getAccountsByUser(userId);
 
