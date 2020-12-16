@@ -4,45 +4,49 @@ import { IAccountAdd } from 'src/requests/AccountAdd';
 import { IBCRCallback } from 'src/requests/BCRCallback';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
+import { AccountCoordinator } from './account.coordinator';
 import { AccountService } from './account.service';
 import { BCRAccountService } from './bcraccount.service';
+import { BrdService } from './brd.service';
+import { BtService } from './bt.service';
 import { IBankAccount } from './models/Account';
 
 @Controller('account')
 export class AccountController {
-	constructor(private readonly service: AccountService, private readonly bcrservice: BCRAccountService) {}
+	constructor(private readonly service: AccountService, private readonly serviceBRD: BrdService,
+    private coordinator: AccountCoordinator, private btService: BtService, private bcrService: BCRAccountService) {}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('add')
 	addAccount(@Request() req: IAccountAdd): Promise<string> {
-		return this.service.addAcount(req.user.userId, req.body.bank);
+		return this.coordinator.addAcount(req.user.userId, req.body.bank);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('addbcr')
 	addBCRAccount(@Request() req: IAccountAdd): Promise<string> {
-		return this.bcrservice.addAcount(req.user.userId, req.body.bank);
+		return this.bcrService.addAcount(req.user.userId, req.body.bank);
 	}
 
 	@Post('btcallback')
 	async btcallback(@Body() body: IBTCallback): Promise<void> {
-		await this.service.handleBTCallback(body);
+		await this.btService.handleBTCallback(body);
 	}
 	@Post('bcrcallback')
 	async bcrcallback(@Body() body: IBCRCallback): Promise<void> {
-		await this.bcrservice.handleBCRCallback(body);
+		await this.bcrService.handleBCRCallback(body);
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('sync')
+	@Post('btsync')
 	async syncAccount(@Request() req: ISyncAccountRequest): Promise<void> {
-		await this.service.syncBTAccount(req.body.accountId);
+		await this.btService.syncBTAccount(req.body.accountId);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('syncbcr')
 	async syncBCRAccount(@Request() req: ISyncAccountRequest): Promise<void> {
-		await this.bcrservice.syncBCRAccount(req.body.accountId);
+		await this.bcrService.syncBCRAccount(req.body.accountId);
 	}
 
   @UseGuards(JwtAuthGuard)

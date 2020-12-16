@@ -3,7 +3,7 @@ export interface ITransaction {
   id?: number;
   transaction_id?: number;
   amount?: number;
-  currency?: number;
+  currency?: string;
   details?: string;
   date_time?: Date;
   account_id?: number;
