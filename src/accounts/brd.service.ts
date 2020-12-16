@@ -1,18 +1,20 @@
 import { Injectable, HttpService } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { AccountGateway } from './account.gateway';
-import { EnumBankAccountStatus, EnumBanks, IBankAccount } from './models/Account';
+import { EnumBankAccountStatus, IBankAccount } from './models/Account';
 import { randomBytes } from 'crypto';
-import { IOauth } from './models/Oauth';
+import { EnumBanks, IOauth } from './models/Oauth';
 import { TransactionService } from 'src/transactions/transaction.service';
 import { ITransaction } from 'src/transactions/models/Transactions';
 import { IBRDBalance } from './models/BRDModels/BRDBalance';
 import { IBRDTransaction } from './models/BRDModels/BRDTransaction';
 import { OkPacket } from 'mysql';
+import { AccountService } from './account.service';
 
 @Injectable()
-export class AccountServiceBRD {
-	constructor(private gateway: AccountGateway, private configProvider: ConfigProvider, private httpService: HttpService, private transactionService: TransactionService) {
+export class BrdService extends AccountService {
+	constructor(gateway: AccountGateway, configProvider: ConfigProvider, httpService: HttpService, transactionService: TransactionService) {
+		super(gateway, configProvider, httpService, transactionService);
 	}
 
 	async addAcountBRD(userId: number): Promise<string> {
