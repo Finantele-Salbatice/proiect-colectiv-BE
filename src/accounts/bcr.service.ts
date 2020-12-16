@@ -1,7 +1,8 @@
-import { Injectable, HttpService, NotFoundException } from '@nestjs/common';
+import { Injectable, HttpService } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { AccountGateway } from './account.gateway';
-import { EnumBankAccountStatus, EnumBanks, IBankAccount } from './models/Account';
+import { EnumBankAccountStatus, EnumBanks } from './models/Oauth';
+import { IBankAccount } from './models/Account';
 import { AxiosRequestConfig } from 'axios';
 import { IBCRCallback } from 'src/requests/BCRCallback';
 import { stringify } from 'querystring';
@@ -12,9 +13,11 @@ import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
 import { ITransaction } from 'src/transactions/models/Transactions';
 import { AccountService } from './account.service';
+import { Agent } from 'https';
+import { readFileSync } from 'fs';
 
 @Injectable()
-export class BCRAccountService extends AccountService  {
+export class BcrService extends AccountService  {
 	constructor( gateway: AccountGateway,  configProvider: ConfigProvider,  httpService: HttpService,  transactionService: TransactionService) {
 		super(gateway, configProvider, httpService, transactionService);
 	}
@@ -48,6 +51,19 @@ export class BCRAccountService extends AccountService  {
 	get BCR_ACCOUNTS_URL(): string {
 		return this.configProvider.getConfig().BCR_ACCOUNTS_URL;
 	}
+	get BCR_FINGERPRINT(): string {
+		return this.configProvider.getConfig().BCR_FINGERPRINT;
+	}
+
+	get BCRCertfs(): Agent {
+		const httpsAgent = new Agent({
+			rejectUnauthorized: false, // (NOTE: this will disable client verification)
+			cert: readFileSync('./public-key.pem'),
+			key: readFileSync('./private-key.pem'),
+			passphrase: this.BCR_FINGERPRINT,
+		});
+		return httpsAgent;
+	}
 
 	async createBCROauth(userId: number): Promise<string> {
 		const acc: IOauth = {
@@ -76,14 +92,6 @@ export class BCRAccountService extends AccountService  {
 		console.log(config.params);
 		const url = ref.getUri(config);
 		return url;
-	}
-
-	async getOauthById(id: number): Promise<IOauth> {
-		const [result] = await this.gateway.getOauthById(id);
-		if (!result) {
-			throw new NotFoundException('Oauth not found!');
-		}
-		return result;
 	}
 
 	async handleBCRCallbackData(data: IBCROauthResponse, userId: number): Promise<void> {
@@ -162,12 +170,13 @@ export class BCRAccountService extends AccountService  {
 		};
 		console.log('oauth------',oauth);
 		console.log('bodyyyy----',body);
+
+		//const Agent = this.BCRCertfs;
+		console.log(Agent);
 		const axios = this.httpService.axiosRef;
 		try {
 			const result = await axios.post(this.BCR_TOKEN_URL, stringify(body), {
-				// headers: {
-				// 	'Content-Type': 'application/x-www-form-urlencoded',
-				// },
+
 			});
 			const data = result.data;
 			console.log('data--------', data);

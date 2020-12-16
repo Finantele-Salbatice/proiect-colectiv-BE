@@ -32,4 +32,5 @@ export interface IConfig {
   BCR_TOKEN_URL: string;
   BCR_WEB_API_KEY: string;
   BCR_ACCOUNTS_URL: string;
+  BCR_FINGERPRINT: string;
 }
