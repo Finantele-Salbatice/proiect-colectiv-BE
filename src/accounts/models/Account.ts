@@ -1,3 +1,4 @@
+import { EnumBanks } from './Oauth';
 
 export interface IBankAccount {
   id?: number;
@@ -17,11 +18,6 @@ export interface IBankAccount {
   balance_see?: string;
   token_expires_at?: Date;
   currency?: string;
-}
-
-export enum EnumBanks {
-  BT = 'bt',
-  BCR = 'bcr'
 }
 
 export enum EnumBankAccountStatus {

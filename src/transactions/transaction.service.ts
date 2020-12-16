@@ -22,7 +22,7 @@ export class TransactionService {
 	}
 
 	async insertTransaction(transaction: ITransaction): Promise<any> {
-		await this.gateway.insertTransaction(transaction);
+		return await this.gateway.insertTransaction(transaction);
 	}
 	async lastTransactions(days: number, userId: number): Promise<ITransaction[]> {
 		const result = await this.gateway.getLastTransactions(days,userId);
