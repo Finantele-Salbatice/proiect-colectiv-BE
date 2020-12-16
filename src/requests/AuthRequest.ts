@@ -4,3 +4,8 @@ export interface AuthRequest {
     userId: number
   };
 }
+export interface BRDRequest {
+  body: {
+    userId: number
+  };
+}
