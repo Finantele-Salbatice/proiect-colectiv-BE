@@ -58,8 +58,8 @@ export class BcrService extends AccountService  {
 	get BCRCertfs(): Agent {
 		const httpsAgent = new Agent({
 			rejectUnauthorized: false, // (NOTE: this will disable client verification)
-			cert: readFileSync('./public-key.pem'),
-			key: readFileSync('./private-key.pem'),
+			cert: readFileSync('public/public-key.pem'),
+			key: readFileSync('public/private-key.key'),
 			passphrase: this.BCR_FINGERPRINT,
 		});
 		return httpsAgent;
@@ -94,95 +94,132 @@ export class BcrService extends AccountService  {
 		return url;
 	}
 
+	async getBCRAccounts(data: IBCROauthResponse): Promise<any> {
+		const ref = this.httpService.axiosRef;
+		const agent = this.BCRCertfs;
+		try {
+			const result = await ref.get(this.BCR_ACCOUNTS_URL, {
+				httpsAgent: agent,
+				headers: {
+					authorization: `Bearer ${data.access_token}`,
+					'x-request-id': v4(),
+					'web-api-key': this.BCR_WEB_API_KEY,
+				},
+			});
+			console.log(result.data);
+			return result.data;
+		} catch (err) {
+			if (err.response) {
+				console.log(err.response.data);
+			} else {
+				console.log(err);
+			}
+		}
+	}
+	async getBCRBalance(data: IBCROauthResponse, resourceID: any): Promise<any> {
+		const ref = this.httpService.axiosRef;
+		const agent = this.BCRCertfs;
+		try {
+			const result = await ref.get(`${this.BCR_ACCOUNTS_URL}/${resourceID}/balances`, {
+				httpsAgent: agent,
+				headers: {
+					authorization: `Bearer ${data.access_token}`,
+					'x-request-id': v4(),
+					'web-api-key': this.BCR_WEB_API_KEY,
+				},
+			});
+			return result.data;
+		} catch (err) {
+			if (err.response) {
+				console.log(err.response.data);
+			} else {
+				console.log(err);
+			}
+		}
+	}
+
 	async handleBCRCallbackData(data: IBCROauthResponse, userId: number): Promise<void> {
-		const accountsCount = +data.accounts_count;
-		const transactionsCount = +data.transactions_count;
-		const balancesCount = +data.balances_count;
-		const accounts: Record<string, IBankAccount> = {
-		};
-		for (let i = 0; i < accountsCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BCR,
+		console.log(data);
+		console.log(userId);
+		const accounts = await this.getBCRAccounts(data);
+		console.log(accounts);
+		const balance = await this.getBCRBalance(data, '11e07590-27d4-409e-914b-c248fb945b11');
+		console.log(balance);
+		/*
+		const time = new Date();
+		time.setSeconds(time.getSeconds() + data.expires_in);
+		const ref = this.httpService.axiosRef;
+		const agent = this.BCRCertfs;
+		try {
+			const result = await ref.get(this.BCR_ACCOUNTS_URL, {
+				httpsAgent: agent,
+				headers: {
+					authorization: `Bearer ${data.access_token}`,
+					'x-request-id': v4(),
+					'web-api-key': this.BCR_WEB_API_KEY,
+				},
+			});
+			const data2 = result.data.accounts;
+			const accounts: Record<string, IBankAccount> = {
 			};
-			const currentAcc = `accounts_${i}`;
-			const accountId = data[currentAcc];
-			account.iban = accountId;
-			accounts[accountId] = account;
-		}
-
-		for (let i = 0; i < transactionsCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BCR,
-			};
-			const currentTran = `transactions_${i}`;
-			const accountId = data[currentTran];
-			if (accounts[accountId]) {
-				accounts[accountId].transaction_see = accountId;
-				continue;
+			const accArray = data2.values(accounts);
+			await Promise.all(
+				accArray.map(async acc => {
+					const newId = await this.insertBankAccount(acc);
+					await this.syncBCRAccount(newId);
+				}));
+			for (let i = 0; i < data2.length; i++) {
+				const obj = data2[i];
+				const account: IBankAccount = {
+					account_id: obj.resourceId,
+					iban: obj.iban,
+					user_id: userId,
+					access_token: data.access_token,
+					refresh_token: data.refresh_token,
+					bank: EnumBanks.BT,
+				};
+				accounts[i] = account;
 			}
-			account.iban = accountId;
-			account.transaction_see = accountId;
-			accounts[accountId] = account;
-		}
 
-		for (let i = 0; i < balancesCount; i++) {
-			const account: IBankAccount = {
-				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
-				bank: EnumBanks.BCR,
-			};
-			const currentBalance = `balances_${i}`;
-			const accountId = data[currentBalance];
-			if (accounts[accountId]) {
-				accounts[accountId].balance_see = accountId;
-				continue;
+			//await Promise.all(
+			//accArray.map(async acc => {
+			//const newId = await this.insertBankAccount(acc);
+			//await this.syncBCRAccount(newId);
+			//}));
+		} catch (err) {
+			if (err.response) {
+				console.log(err.response.data);
+			} else {
+				console.log(err);
 			}
-			account.iban = accountId;
-			account.balance_see = accountId;
-			accounts[accountId] = account;
 		}
-
-		const accArray = Object.values(accounts);
-
-		await Promise.all(
-			accArray.map(async acc => {
-				const newId = await this.insertBankAccount(acc);
-				await this.syncBCRAccount(newId);
-			}));
+		*/
 	}
 
 	async handleBCRCallback(request: IBCRCallback): Promise<void> {
 		const id = +request.state;
 		const oauth = await this.getOauthById(id);
-		const body = {
+		const parms = {
 			code: request.code,
 			grant_type: 'authorization_code',
-			redirect_uri: `${this.UI_HOST}bcrsandbox`,
+			redirect_uri: `${this.UI_HOST}/bcrsandbox`,
 			client_id: this.BCR_CLIENT_ID,
 			client_secret: this.BCR_CLIENT_SECRET,
 		};
-		console.log('oauth------',oauth);
-		console.log('bodyyyy----',body);
+		console.log('bodyyyy----',parms);
 
-		//const Agent = this.BCRCertfs;
-		console.log(Agent);
+		const agent = this.BCRCertfs;
 		const axios = this.httpService.axiosRef;
 		try {
-			const result = await axios.post(this.BCR_TOKEN_URL, stringify(body), {
-
+			const result = await axios.post(this.BCR_TOKEN_URL, null,{
+				httpsAgent: agent,
+				params: parms,
 			});
 			const data = result.data;
 			console.log('data--------', data);
 			await this.handleBCRCallbackData(data, oauth.user_id);
 		} catch (err) {
-			console.log(err);
+			console.log(err.response.data);
 		}
 	}
 
@@ -195,13 +232,11 @@ export class BcrService extends AccountService  {
 			client_id: this.BCR_CLIENT_ID,
 			client_secret: this.BCR_CLIENT_SECRET,
 		};
-
+		const agent = this.BCRCertfs;
 		const axios = this.httpService.axiosRef;
 		try {
 			const result = await axios.post(this.BCR_TOKEN_URL, stringify(body), {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
+				httpsAgent: agent,
 			});
 			const data = result.data;
 			const token = data.access_token;

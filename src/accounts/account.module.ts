@@ -6,11 +6,12 @@ import { BrdService } from './brd.service';
 import { AccountGateway } from './account.gateway';
 import { TransactionModule } from 'src/transactions/transaction.module';
 import { BtService } from './bt.service';
+import { BcrService } from './bcr.service';
 import { AccountCoordinator } from './account.coordinator';
 import { AccountController } from './account.controller';
 
 @Module({
-	providers: [AccountService, BrdService, AccountGateway, BtService, AccountCoordinator],
+	providers: [AccountService, BrdService, AccountGateway, BtService, AccountCoordinator, BcrService],
 	exports: [AccountService, BrdService],
 	imports: [SystemModule, AuthModule, HttpModule, TransactionModule],
 	controllers: [AccountController],
