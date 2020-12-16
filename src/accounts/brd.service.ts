@@ -38,7 +38,6 @@ export class BrdService extends AccountService {
 
 	async createBRDOauth(userId: number): Promise<any> {
 		const axios = this.httpService.axiosRef;
-		let data;
 		try {
 			const result = await axios.post(this.BRD_CONSENT_URL, {
 				access: {
@@ -53,24 +52,24 @@ export class BrdService extends AccountService {
 				headers: {
 					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
 					'PSU-ID': '13333330',
-					'PSU-IP-Address': '192.168.0.121',
+					'PSU-IP-Address': '130.61.156.194',
 				},//am pus ipul meu temporar
 			});
-			data = result.data;
+			const data = result.data;
+			const verifier = this.base64URLEncode(randomBytes(32));
+			const acc: IOauth = {
+				user_id: userId,
+				bank: EnumBanks.BRD,
+				status: EnumBankAccountStatus.inProgess,
+				access_token: data.consentId,
+				code_verifier: verifier,
+			};
+			const oauth = await this.gateway.addOauth(acc);
+			acc.id = oauth.insertId;
+			return this.handleBRDAccounts(acc);
 		} catch (err) {
 			console.log(err);
 		}
-		const verifier = this.base64URLEncode(randomBytes(32));
-		const acc: IOauth = {
-			user_id: userId,
-			bank: EnumBanks.BRD,
-			status: EnumBankAccountStatus.inProgess,
-			access_token: data.consentId,
-			code_verifier: verifier,
-		};
-		const result = await this.gateway.addOauth(acc);
-		acc.id = result.insertId;
-		return this.handleBRDAccounts(acc);
 	}
 
 	//--------------de adus tranzactiile in db folosind consent
@@ -92,16 +91,16 @@ export class BrdService extends AccountService {
 	}
 
 	async handleBRDData(acc: IOauth, accounts: any): Promise<void> {
-		for (const account of accounts) {
+		await Promise.all(accounts.map(async account => {
 			const balance = await this.getBalanceOfAccount(acc, account.resourceId);
 			const savedAccount = await this.saveBalance(acc, account, balance);
 			const transactions = await this.getTransactionsOfAccount(acc, account.resourceId);
 			await this.saveTransactions(savedAccount,transactions);
-		}
+		}));
 	}
 
 	async getBalanceOfAccount(acc: IOauth, accountId: number): Promise<IBRDBalance> {
-		const urlBalance = this.BRD_ACCOUNTS_URL + '/' + accountId + '/balances';
+		const urlBalance = `${this.BRD_ACCOUNTS_URL}/${accountId}/balances`;
 		const axios = this.httpService.axiosRef;
 		try {
 			const result = await axios.get(urlBalance, {
@@ -119,7 +118,7 @@ export class BrdService extends AccountService {
 	}
 
 	async getTransactionsOfAccount(acc: IOauth, accountId: number): Promise<IBRDTransaction[]> {
-		const urlBalance = this.BRD_ACCOUNTS_URL + '/' + accountId + '/transactions';
+		const urlBalance = `${this.BRD_ACCOUNTS_URL}/${accountId}/transactions`;
 		const axios = this.httpService.axiosRef;
 		try {
 			const result = await axios.get(urlBalance, {
@@ -160,7 +159,7 @@ export class BrdService extends AccountService {
 	}
 
 	async saveTransactions(savedAccount: OkPacket, transactions: IBRDTransaction[]): Promise<void> {
-		for (const tran of transactions) {
+		await Promise.all(transactions.map(async tran => {
 			const transaction: ITransaction = {
 				transaction_id: tran.EndToEndId,
 				amount: tran.transactionAmount.amount,
@@ -172,12 +171,11 @@ export class BrdService extends AccountService {
 				created_at: new Date (tran.valueDate),
 			};
 			await this.transactionService.insertTransaction(transaction);
-		}
+		}));
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	async syncBRDAccount(): Promise<void> {
-		//????
 	}
-
 }
 
