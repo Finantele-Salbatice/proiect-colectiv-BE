@@ -7,10 +7,10 @@ import { IOauth } from './models/Oauth';
 import { TransactionService } from 'src/transactions/transaction.service';
 @Injectable()
 export class AccountService {
-	gateway: any;
-	configProvider: any;
-	httpService: any;
-	transactionService: any;
+	gateway: AccountGateway;
+	configProvider: ConfigProvider;
+	httpService: HttpService;
+	transactionService: TransactionService;
 	constructor(gateway: AccountGateway, configProvider: ConfigProvider, httpService: HttpService, transactionService: TransactionService) {
 		this.gateway = gateway;
 		this.configProvider = configProvider;
