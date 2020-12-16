@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { IAccountAdd } from 'src/requests/AccountAdd';
-import { BRDRequest } from 'src/requests/AuthRequest';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
 import { AccountCoordinator } from './account.coordinator';
@@ -19,11 +18,6 @@ export class AccountController {
 	@Post('add')
 	addAccount(@Request() req: IAccountAdd): Promise<string> {
 		return this.coordinator.addAcount(req.user.userId, req.body.bank);
-	}
-
-	@Post('addBRD')
-	addAccountBRD(@Request() req: BRDRequest): Promise<string> {
-		return this.serviceBRD.addAcountBRD(req.body.userId);
 	}
 
 	@Post('btcallback')

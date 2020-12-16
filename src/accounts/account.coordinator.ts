@@ -13,7 +13,7 @@ export class AccountCoordinator {
 			return this.btService.createBTOauth(userId);
 		}
 		if (bank === EnumBanks.BRD) {
-			return this.brdService.createBRDOauth(userId);
+			return this.brdService.addAcountBRD(userId);
 		}
 	}
 }
