@@ -81,6 +81,8 @@ export class BtService extends AccountService {
 		const accountsCount = +data.accounts_count;
 		const transactionsCount = +data.transactions_count;
 		const balancesCount = +data.balances_count;
+		oauth.refresh_token = data.refresh_tokenl;
+		oauth.access_token = data.access_token;
 		const accounts: Record<string, IBankAccount> = {
 		};
 		for (let i = 0; i < accountsCount; i++) {
@@ -127,6 +129,8 @@ export class BtService extends AccountService {
 		}
 
 		const accArray = Object.values(accounts);
+
+		await this.updateOauthById(oauth, oauth.id);
 
 		await Promise.all(
 			accArray.map(async acc => {
