@@ -16,7 +16,7 @@ export class AccountGateway extends Database {
 
 	addAccount(account: IBankAccount): Promise<any> {
 		const sql = `
-			INSERT INTO ${this.bankAccountTable} SET ?;
+			INSERT IGNORE INTO ${this.bankAccountTable} SET ?;
 		`;
 
 		return this.query({

@@ -89,6 +89,7 @@ export class BtService extends AccountService {
 			const account: IBankAccount = {
 				user_id: userId,
 				bank: EnumBanks.BT,
+				oauth_id: oauth.id,
 			};
 			const currentAcc = `accounts_${i}`;
 			const accountId = data[currentAcc];
@@ -100,6 +101,7 @@ export class BtService extends AccountService {
 			const account: IBankAccount = {
 				user_id: userId,
 				bank: EnumBanks.BT,
+				oauth_id: oauth.id,
 			};
 			const currentTran = `transactions_${i}`;
 			const accountId = data[currentTran];
@@ -116,6 +118,7 @@ export class BtService extends AccountService {
 			const account: IBankAccount = {
 				user_id: userId,
 				bank: EnumBanks.BT,
+				oauth_id: oauth.id,
 			};
 			const currentBalance = `balances_${i}`;
 			const accountId = data[currentBalance];
@@ -130,11 +133,13 @@ export class BtService extends AccountService {
 
 		const accArray = Object.values(accounts);
 
+		oauth.refresh_token = data.refresh_token;
+		oauth.access_token = data.access_token;
+		oauth.token_expires_at = moment().add(1, 'hour').toDate();
 		await this.updateOauthById(oauth, oauth.id);
 
 		await Promise.all(
 			accArray.map(async acc => {
-				acc.oauth_id = oauth.id;
 				const newId = await this.insertBankAccount(acc);
 				await this.syncBTAccount(newId);
 			}));
