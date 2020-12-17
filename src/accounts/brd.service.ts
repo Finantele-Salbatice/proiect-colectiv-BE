@@ -8,7 +8,6 @@ import { TransactionService } from 'src/transactions/transaction.service';
 import { ITransaction } from 'src/transactions/models/Transactions';
 import { IBRDBalance } from './models/BRDModels/BRDBalance';
 import { IBRDTransaction } from './models/BRDModels/BRDTransaction';
-import { OkPacket } from 'mysql';
 import { AccountService } from './account.service';
 
 @Injectable()
@@ -124,7 +123,7 @@ export class BrdService extends AccountService {
 
 	}
 
-	async saveBalance(acc: IOauth, account: any, balance: IBRDBalance): Promise<OkPacket> {
+	async saveBalance(acc: IOauth, account: any, balance: IBRDBalance): Promise<number> {
 		const bankAccount: IBankAccount = {
 			user_id: acc.user_id,
 			bank: EnumBanks.BRD,
@@ -137,20 +136,22 @@ export class BrdService extends AccountService {
 			balance_see: account.iban,
 			synced_at: new Date(),
 			additional_data: JSON.stringify(account),
+			oauth_id: acc.id,
 		};
 		//trebuie fuctie de verificare??
-		const result = await this.gateway.addAccount(bankAccount);
+
+		const result = await this.insertBankAccount(bankAccount);
 		return result;
 	}
 
-	async saveTransactions(savedAccount: OkPacket, transactions: IBRDTransaction[]): Promise<void> {
+	async saveTransactions(savedAccount: number, transactions: IBRDTransaction[]): Promise<void> {
 		await Promise.all(transactions.map(async tran => {
 			const transaction: ITransaction = {
 				transaction_id: tran.EndToEndId,
 				amount: tran.transactionAmount.amount,
 				currency: tran.transactionAmount.currency,
 				date_time: new Date(tran.bookingDate),
-				account_id: savedAccount.insertId,
+				account_id: savedAccount,
 				beneficiary: tran.creditorName,
 				raw_data: JSON.stringify(tran),
 				created_at: new Date (tran.valueDate),
