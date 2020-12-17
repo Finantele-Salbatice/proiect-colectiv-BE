@@ -2,8 +2,8 @@ import { EnumBanks } from './Oauth';
 
 export interface IBankAccount {
   id?: number;
+  oauth_id?: number
   user_id?: number;
-  oauth_id?: number;
   bank?: EnumBanks;
   account_id?: string;
   iban?: string;

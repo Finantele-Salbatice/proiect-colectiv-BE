@@ -15,6 +15,7 @@ export class UserController {
 
 	@Post('login')
 	async login(@Body() body: LoginRequest): Promise<string> {
+		console.log('login------------------------------------');
 		return this.service.login(body.email, body.password);
 	}
 

@@ -5,9 +5,13 @@ import { TransactionModule } from './transactions/transaction.module';
 import { UserController } from './user/user.controller';
 import { UserModule } from './user/user.module';
 import { AccountModule } from './accounts/account.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
-	imports: [SystemModule, UserModule, TransactionModule, AccountModule],
+	imports: [SystemModule, UserModule, TransactionModule, AccountModule,ServeStaticModule.forRoot({
+		rootPath: join(__dirname, '..', 'public'),   // <-- path to the static files
+	})],
 	controllers: [UserController, TransactionController],
 })
 export class AppModule {}

@@ -26,4 +26,11 @@ export interface IConfig {
   BRD_TOKEN_URL: string;
   BRD_ACCOUNTS_URL: string;
   BRD_CONSENT_URL: string;
+  BCR_FORM_URL: string;
+  BCR_CLIENT_ID: string;
+  BCR_CLIENT_SECRET: string;
+  BCR_TOKEN_URL: string;
+  BCR_WEB_API_KEY: string;
+  BCR_ACCOUNTS_URL: string;
+  BCR_FINGERPRINT: string;
 }
