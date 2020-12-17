@@ -76,7 +76,8 @@ export class BtService extends AccountService {
 		return url;
 	}
 
-	async handleBTCallbackData(data: IBTOauthResponse, userId: number): Promise<void> {
+	async handleBTCallbackData(data: IBTOauthResponse, oauth: IOauth): Promise<void> {
+		const userId = oauth.user_id;
 		const accountsCount = +data.accounts_count;
 		const transactionsCount = +data.transactions_count;
 		const balancesCount = +data.balances_count;
@@ -129,6 +130,7 @@ export class BtService extends AccountService {
 
 		await Promise.all(
 			accArray.map(async acc => {
+				acc.oauth_id = oauth.id;
 				const newId = await this.insertBankAccount(acc);
 				await this.syncBTAccount(newId);
 			}));
@@ -154,7 +156,7 @@ export class BtService extends AccountService {
 				},
 			});
 			const data = result.data;
-			await this.handleBTCallbackData(data, oauth.user_id);
+			await this.handleBTCallbackData(data, oauth);
 		} catch (err) {
 			console.log(err);
 		}
