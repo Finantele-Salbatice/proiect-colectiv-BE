@@ -153,17 +153,13 @@ export class BtService extends AccountService {
 		};
 
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-			});
-			const data = result.data;
-			await this.handleBTCallbackData(data, oauth);
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		});
+		const data = result.data;
+		await this.handleBTCallbackData(data, oauth);
 	}
 
 	async syncBTAccount(accountId: number): Promise<void> {
@@ -177,7 +173,6 @@ export class BtService extends AccountService {
 		const ref = this.httpService.axiosRef;
 
 		try {
-
 			const result = await ref.get(this.BT_ACCOUNTS_URL, {
 				params: {
 					withBalance: !!account.balance_see,
@@ -207,10 +202,9 @@ export class BtService extends AccountService {
 			await this.getBtTransactionsByAccount(accountId);
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 
@@ -263,10 +257,9 @@ export class BtService extends AccountService {
 			}, accountId);
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 
@@ -281,20 +274,16 @@ export class BtService extends AccountService {
 		};
 
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-			});
-			const data = result.data;
-			const token = data.access_token;
-			oauth.access_token = token;
-			oauth.token_expires_at = moment().add(1, 'hour').toDate();
-			await this.updateOauthById(oauth, oauth.id);
-			return token;
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		});
+		const data = result.data;
+		const token = data.access_token;
+		oauth.access_token = token;
+		oauth.token_expires_at = moment().add(1, 'hour').toDate();
+		await this.updateOauthById(oauth, oauth.id);
+		return token;
 	}
 }
