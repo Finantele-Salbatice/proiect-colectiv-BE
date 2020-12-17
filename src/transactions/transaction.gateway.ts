@@ -7,7 +7,7 @@ import { ITransaction } from './models/Transactions';
 
 const defaultLimit = 20;
 const defaultSkip = 0;
-const defaultOrderBy = 'id';
+const defaultOrderBy = 'date_time';
 const defaultOrderByList = ['amount', 'date_time'];
 const defaultOrder = 'desc';
 const defaultOrderList = ['asc', 'desc'];
