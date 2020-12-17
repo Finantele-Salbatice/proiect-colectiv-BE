@@ -38,7 +38,7 @@ export class AccountController {
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('syncbcr')
+	@Post('bcrsync')
 	async syncBCRAccount(@Request() req: ISyncAccountRequest): Promise<void> {
 		await this.bcrService.syncBCRAccount(req.body.accountId);
 	}

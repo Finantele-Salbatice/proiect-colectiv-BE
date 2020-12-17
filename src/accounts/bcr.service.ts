@@ -7,7 +7,7 @@ import { AxiosRequestConfig } from 'axios';
 import { IBCRCallback } from 'src/requests/BCRCallback';
 import { IOauth } from './models/Oauth';
 import { IBCROauthResponse } from './models/BCROauth';
-//import * as moment from 'moment';
+import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { TransactionService } from 'src/transactions/transaction.service';
 import { ITransaction } from 'src/transactions/models/Transactions';
@@ -95,7 +95,7 @@ export class BcrService extends AccountService  {
 		const id = +request.state;
 		const oauth = await this.getOauthById(id);
 		const parms = {
-			code: request.code,
+			code: decodeURIComponent(request.code),
 			grant_type: 'authorization_code',
 			redirect_uri: `${this.UI_HOST}/bcrsandbox`,
 			client_id: this.BCR_CLIENT_ID,
@@ -109,13 +109,24 @@ export class BcrService extends AccountService  {
 				params: parms,
 			});
 			const data = result.data;
+			const d = new Date();
+			d.setSeconds(d.getSeconds() + 360);
+			const oauthUpdate: IOauth = {
+				user_id: oauth.user_id,
+				bank: oauth.bank,
+				status: oauth.status,
+				access_token: data.access_token,
+				refresh_token: data.refresh_token,
+				token_expires_at: d,
+			};
+			await this.updateOauthById(oauthUpdate, id);
 			await this.handleBCRCallbackData(data, oauth.user_id, oauth.id);
 		} catch (err) {
 			console.log(err.response.data);
 		}
 	}
-	async saveTransactions(data: IBCROauthResponse, accountId: number, userId: string): Promise<any> {
-		const rawTransactions = await this.getBCRTransactions(data.access_token, userId);
+	async saveTransactions(accesToken: string, accountId: number, userId: string): Promise<any> {
+		const rawTransactions = await this.getBCRTransactions(accesToken, userId);
 		const transactions = rawTransactions.transactions.booked;
 		await Promise.all(
 			transactions.map(async trans => {
@@ -130,14 +141,11 @@ export class BcrService extends AccountService  {
 					details: trans.remittanceInformationUnstructured,
 					created_at: new Date(),
 				};
-				console.log(insertTransaction);
 				await this.transactionService.insertTransaction(insertTransaction);
 			}));
 	}
 
 	async handleBCRCallbackData(data: IBCROauthResponse, userId: number, oauthId: number): Promise<void> {
-		console.log(data);
-		console.log(userId);
 		const rawaccounts = await this.getBCRAccounts(data.access_token);
 		const accounts = rawaccounts.accounts;
 		const userAccounts: Record<string, IBankAccount> = {
@@ -168,7 +176,7 @@ export class BcrService extends AccountService  {
 			accArray.map(async acc => {
 				const newId = await this.insertBankAccount(acc);
 				if (newId) {
-					await this.saveTransactions(data, newId, acc.account_id);
+					await this.saveTransactions(data.access_token, newId, acc.account_id);
 				}
 			}));
 	}
@@ -185,7 +193,6 @@ export class BcrService extends AccountService  {
 					'web-api-key': this.BCR_WEB_API_KEY,
 				},
 			});
-			console.log(result.data);
 			return result.data;
 		} catch (err) {
 			if (err.response) {
@@ -238,12 +245,12 @@ export class BcrService extends AccountService  {
 		}
 	}
 	async refreshBCROauthToken(accountId: number): Promise<string> {
-		const account = await this.getAccountById(accountId);
+		const oauth = await this.getOauthByAccountId(accountId);
 		const parms = {
-			//refresh_token: account.refresh_token,
 			grant_type: 'refresh_token',
 			client_id: this.BCR_CLIENT_ID,
 			client_secret: this.BCR_CLIENT_SECRET,
+			refresh_token: oauth.refresh_token,
 		};
 		const agent = this.BCRCertfs;
 		const axios = this.httpService.axiosRef;
@@ -254,86 +261,30 @@ export class BcrService extends AccountService  {
 			});
 			const data = result.data;
 			const token = data.access_token;
-			//account.access_token = token;
-			//account.token_expires_at = moment().add(300, 'seconds').toDate();
-			await this.updateBankAccountById(account, account.id);
+			const d = new Date();
+			d.setSeconds(d.getSeconds() + 360);
+			oauth.access_token = token;
+			oauth.token_expires_at = d;
+			await this.updateOauthById(oauth, oauth.id);
 			return token;
 		} catch (err) {
 			console.log(err.response.data);
 		}
 	}
-
-	async getBCRTransactionsByAccount(accountId: number, accesToken: string): Promise<void> {
-		const account = await this.getAccountById(accountId);
-		const ref = this.httpService.axiosRef;
-		const agent = this.BCRCertfs;
-		try {
-			const result = await ref.get(`${this.BCR_ACCOUNTS_URL}/${account.account_id}/transactions`, {
-				httpsAgent: agent,
-				headers: {
-					authorization: `Bearer ${accesToken}`,
-					'x-request-id': v4(),
-					'web-api-key': this.BCR_WEB_API_KEY,
-				},
-			});
-			const transactions = result.data.transactions.booked;
-			await Promise.all(transactions.map(async trans => {
-				const insertTransaction: ITransaction = {
-					account_id: accountId,
-					raw_data: JSON.stringify(trans),
-					amount: trans.transactionAmount.amount,
-					currency: trans.transactionAmount.currency,
-					transaction_id: trans.transactionId,
-					beneficiary: trans.creditorName,
-					date_time: trans.valueDate,
-					details: trans.remittanceInformationUnstructured,
-					created_at: new Date(),
-
-				};
-				console.log(insertTransaction);
-				await this.transactionService.insertTransaction(insertTransaction);
-			}));
-			await this.updateBankAccountById({
-				synced_at: new Date(),
-			}, accountId);
-		} catch (err) {
-			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
-			}
-		}
-	}
-
 	async syncBCRAccount(accountId: number): Promise<void> {
-		console.log('am intrat in sync');
-		//const account = await this.getAccountById(accountId);
-		// if (moment(account.token_expires_at).isBefore(new Date())) {
-		// 	console.log('se face refresh');
-		// 	const token = await this.refreshBCROauthToken(account.id);
-		// 	account.access_token = token;
-		// 	console.log('s-a facut refresh');
-		// }
-		console.log('obtinem accestoken si conturi');
-		const data = await this.getOauthById(accountId);
-		console.log('data pentru token', data);
-		const rawaccounts = await this.getBCRAccounts(data.access_token);
-		const accounts = rawaccounts.accounts;
-		await Promise.all(accounts.map(async acc => {
-			const iban = acc.iban;
-			const rawbalance = await this.getBCRBalance(data.access_token, acc.resourceId);
-			const balances = rawbalance.balances;
-			const firstbalance = balances[0].balanceAmount;
-			const update: IBankAccount = {
-				currency: firstbalance.currency,
-				account_id: acc.resourceId,
-				description: acc.description,
-				additional_data: JSON.stringify(acc),
-			};
-			const amount = firstbalance.amount;
-			update.balance = amount;
-			await this.gateway.updateBankAccountByIban(update, iban);
-		}));
-		await this.getBCRTransactionsByAccount(accountId, data.access_token);
+		const oauth = await this.getOauthByAccountId(accountId);
+		if (moment(oauth.token_expires_at).isBefore(new Date())) {
+			await this.refreshBCROauthToken(accountId);
+		}
+		const data = await this.getOauthByAccountId(accountId);
+		const acc = await this.getAccountById(accountId);
+		const iban = acc.iban;
+		const rawbalance = await this.getBCRBalance(data.access_token, acc.account_id);
+		const balances = rawbalance.balances;
+		const firstbalance = balances[0].balanceAmount;
+		acc.balance = firstbalance.amount;
+		acc.currency = firstbalance.currency;
+		await this.gateway.updateBankAccountByIban(acc, iban);
+		await this.saveTransactions(data.access_token, accountId, acc.account_id);
 	}
 }

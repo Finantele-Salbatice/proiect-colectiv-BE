@@ -36,18 +36,6 @@ export class AccountGateway extends Database {
 		});
 	}
 
-	updateOauthById(oauth: IOauth, id: number): Promise<any> {
-		const sql = `
-		UPDATE ${this.oauthTable}
-		SET ?
-		WHERE id = ?;`;
-
-		return this.query({
-			sql,
-			values: [oauth, id],
-		});
-	}
-
 	getAccountById(id: number): Promise<any> {
 		const sql = `
 			SELECT * FROM ${this.bankAccountTable}
