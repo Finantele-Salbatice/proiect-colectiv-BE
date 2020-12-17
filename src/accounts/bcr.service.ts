@@ -122,7 +122,10 @@ export class BcrService extends AccountService  {
 			await this.updateOauthById(oauthUpdate, id);
 			await this.handleBCRCallbackData(data, oauth.user_id, oauth.id);
 		} catch (err) {
-			console.log(err.response.data);
+			if (err.response) {
+				throw new Error(err.response.data);
+			}
+			throw err;
 		}
 	}
 	async saveTransactions(accesToken: string, accountId: number, userId: string): Promise<any> {
@@ -196,10 +199,9 @@ export class BcrService extends AccountService  {
 			return result.data;
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 	async getBCRBalance(accesToken: string, resourceID: any): Promise<any> {
@@ -217,10 +219,9 @@ export class BcrService extends AccountService  {
 			return result.data;
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 	async getBCRTransactions(accesToken: string, resourceId: any): Promise<any> {
@@ -238,10 +239,9 @@ export class BcrService extends AccountService  {
 			return result.data;
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 	async refreshBCROauthToken(accountId: number): Promise<string> {
@@ -268,7 +268,10 @@ export class BcrService extends AccountService  {
 			await this.updateOauthById(oauth, oauth.id);
 			return token;
 		} catch (err) {
-			console.log(err.response.data);
+			if (err.response) {
+				throw new Error(err.response.data);
+			}
+			throw err;
 		}
 	}
 	async syncBCRAccount(accountId: number): Promise<void> {
