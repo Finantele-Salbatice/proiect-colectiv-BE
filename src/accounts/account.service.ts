@@ -51,6 +51,11 @@ export class AccountService {
 		return result;
 	}
 
+	async getOauthByAccountId(accountId: number): Promise<IOauth> {
+		const [result] = await this.gateway.getOauthByAccountId(accountId);
+		return result;
+	}
+
 	async getOauthById(id: number): Promise<IOauth> {
 		const [result] = await this.gateway.getOauthById(id);
 		if (!result) {
@@ -63,9 +68,12 @@ export class AccountService {
 		await this.gateway.updateBankAccountById(bankAccount, id);
 	}
 
+	async updateOauthById(oauth: IOauth, id: number): Promise<void> {
+		await this.gateway.updateOauthById(oauth, id);
+	}
+
 	async getAllByUser(userId: number): Promise<IBankAccount[]> {
 		const results = await this.gateway.getAccountsByUser(userId);
-
 		return results;
 	}
 }

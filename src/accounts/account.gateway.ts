@@ -72,6 +72,20 @@ export class AccountGateway extends Database {
 		});
 	}
 
+	getOauthByAccountId(accountId: number): Promise<any> {
+		const sql = `
+      SELECT ${this.oauthTable}.* FROM ${this.oauthTable}
+      JOIN ${this.bankAccountTable} ON
+        ${this.bankAccountTable}.oauth_id = ${this.oauthTable}.id
+			WHERE ${this.bankAccountTable}.id = ?;
+		`;
+
+		return this.query({
+			sql,
+			values: [accountId],
+		});
+	}
+
 	updateBankAccountById(account: IBankAccount, id: number): Promise<any> {
 		const sql = `
 		UPDATE ${this.bankAccountTable}
@@ -81,6 +95,20 @@ export class AccountGateway extends Database {
 		return this.query({
 			sql,
 			values: [account, id],
+		});
+	}
+
+	updateOauthById(oauth: IOauth, id: number): Promise<any> {
+		const sql = `
+		UPDATE ${this.oauthTable}
+		SET ?
+    WHERE id = ?;`;
+
+		delete oauth.id;
+
+		return this.query({
+			sql,
+			values: [oauth, id],
 		});
 	}
 
