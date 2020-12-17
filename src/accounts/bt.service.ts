@@ -130,6 +130,9 @@ export class BtService extends AccountService {
 
 		const accArray = Object.values(accounts);
 
+		oauth.refresh_token = data.refresh_token;
+		oauth.access_token = data.access_token;
+		oauth.token_expires_at = moment().add(1, 'hour').toDate();
 		await this.updateOauthById(oauth, oauth.id);
 
 		await Promise.all(
