@@ -38,56 +38,48 @@ export class BrdService extends AccountService {
 
 	async createBRDOauth(userId: number): Promise<any> {
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.post(this.BRD_CONSENT_URL, {
-				access: {
-					'allPsd2': 'allAccounts',
-				},
-				recurringIndicator: true,
-				validUntil: '2020-12-31',
-				frequencyPerDay: 4,
-				combinedServiceIndicator: false,
+		const result = await axios.post(this.BRD_CONSENT_URL, {
+			access: {
+				'allPsd2': 'allAccounts',
 			},
-			{
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'PSU-ID': '13333330',
-					'PSU-IP-Address': '130.61.156.194',
-				},//am pus ipul meu temporar
-			});
-			const data = result.data;
-			const verifier = this.base64URLEncode(randomBytes(32));
-			const acc: IOauth = {
-				user_id: userId,
-				bank: EnumBanks.BRD,
-				status: EnumBankAccountStatus.inProgess,
-				access_token: data.consentId,
-				code_verifier: verifier,
-			};
-			const oauth = await this.gateway.addOauth(acc);
-			acc.id = oauth.insertId;
-			return this.handleBRDAccounts(acc);
-		} catch (err) {
-			console.log(err);
-		}
+			recurringIndicator: true,
+			validUntil: '2020-12-31',
+			frequencyPerDay: 4,
+			combinedServiceIndicator: false,
+		},
+		{
+			headers: {
+				'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+				'PSU-ID': '13333330',
+				'PSU-IP-Address': '130.61.156.194',
+			},//am pus ipul meu temporar
+		});
+		const data = result.data;
+		const verifier = this.base64URLEncode(randomBytes(32));
+		const acc: IOauth = {
+			user_id: userId,
+			bank: EnumBanks.BRD,
+			status: EnumBankAccountStatus.inProgess,
+			access_token: data.consentId,
+			code_verifier: verifier,
+		};
+		const oauth = await this.gateway.addOauth(acc);
+		acc.id = oauth.insertId;
+		return this.handleBRDAccounts(acc);
 	}
 
 	//--------------de adus tranzactiile in db folosind consent
 	async handleBRDAccounts(acc: IOauth): Promise<void> {
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.get(this.BRD_ACCOUNTS_URL, {
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'Consent-ID': acc.access_token,
-					'content-type': 'application/json',
-				},
-			});
-			const data = result.data;
-			await this.handleBRDData(acc, data.accounts);
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.get(this.BRD_ACCOUNTS_URL, {
+			headers: {
+				'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+				'Consent-ID': acc.access_token,
+				'content-type': 'application/json',
+			},
+		});
+		const data = result.data;
+		await this.handleBRDData(acc, data.accounts);
 	}
 
 	async handleBRDData(acc: IOauth, accounts: any): Promise<void> {
@@ -102,41 +94,34 @@ export class BrdService extends AccountService {
 	async getBalanceOfAccount(acc: IOauth, accountId: number): Promise<IBRDBalance> {
 		const urlBalance = `${this.BRD_ACCOUNTS_URL}/${accountId}/balances`;
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.get(urlBalance, {
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'Consent-ID': acc.access_token,
-					'content-type': 'application/json',
-				},
-			});
-			const [data] = result.data.balances;
-			return data;
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.get(urlBalance, {
+			headers: {
+				'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+				'Consent-ID': acc.access_token,
+				'content-type': 'application/json',
+			},
+		});
+		const [data] = result.data.balances;
+		return data;
 	}
 
 	async getTransactionsOfAccount(acc: IOauth, accountId: number): Promise<IBRDTransaction[]> {
 		const urlBalance = `${this.BRD_ACCOUNTS_URL}/${accountId}/transactions`;
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.get(urlBalance, {
-				params: {
-					dateFrom: '2018-02-03',
-					bookingStatus: 'booked',
-				},
-				headers: {
-					'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
-					'Consent-ID': acc.access_token,
-					'content-type': 'application/json',
-				},
-			});
-			const data = result.data.transactions.booked;
-			return data;
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.get(urlBalance, {
+			params: {
+				dateFrom: '2018-02-03',
+				bookingStatus: 'booked',
+			},
+			headers: {
+				'X-Request-ID': 'dd315545-cb97-401e-8364-341e378894aa',
+				'Consent-ID': acc.access_token,
+				'content-type': 'application/json',
+			},
+		});
+		const data = result.data.transactions.booked;
+		return data;
+
 	}
 
 	async saveBalance(acc: IOauth, account: any, balance: IBRDBalance): Promise<OkPacket> {

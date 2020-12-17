@@ -8,6 +8,7 @@ export interface IOauth {
   refresh_token?: string;
   code_verifier?: string;
   additional_data?: any;
+  token_expires_at?: Date;
 }
 
 export enum EnumBanks {

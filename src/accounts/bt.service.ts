@@ -46,18 +46,18 @@ export class BtService extends AccountService {
 
 	async createBTOauth(userId: number): Promise<string> {
 		const verifier = this.base64URLEncode(randomBytes(32));
-		const acc: IOauth = {
+		const oauth: IOauth = {
 			user_id: userId,
 			bank: EnumBanks.BT,
 			status: EnumBankAccountStatus.inProgess,
 			code_verifier: verifier,
 		};
-		const result = await this.gateway.addOauth(acc);
-		acc.id = result.insertId;
-		return this.createBTForm(acc);
+		const result = await this.gateway.addOauth(oauth);
+		oauth.id = result.insertId;
+		return this.createBTForm(oauth);
 	}
 
-	createBTForm(acc: IBankAccount): string {
+	createBTForm(acc: IOauth): string {
 		const codeChallange = this.base64URLEncode(this.sha256(acc.code_verifier));
 		const ref = this.httpService.axiosRef;
 		const config: AxiosRequestConfig = {
@@ -76,18 +76,20 @@ export class BtService extends AccountService {
 		return url;
 	}
 
-	async handleBTCallbackData(data: IBTOauthResponse, userId: number): Promise<void> {
+	async handleBTCallbackData(data: IBTOauthResponse, oauth: IOauth): Promise<void> {
+		const userId = oauth.user_id;
 		const accountsCount = +data.accounts_count;
 		const transactionsCount = +data.transactions_count;
 		const balancesCount = +data.balances_count;
+		oauth.refresh_token = data.refresh_tokenl;
+		oauth.access_token = data.access_token;
 		const accounts: Record<string, IBankAccount> = {
 		};
 		for (let i = 0; i < accountsCount; i++) {
 			const account: IBankAccount = {
 				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
 				bank: EnumBanks.BT,
+				oauth_id: oauth.id,
 			};
 			const currentAcc = `accounts_${i}`;
 			const accountId = data[currentAcc];
@@ -98,9 +100,8 @@ export class BtService extends AccountService {
 		for (let i = 0; i < transactionsCount; i++) {
 			const account: IBankAccount = {
 				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
 				bank: EnumBanks.BT,
+				oauth_id: oauth.id,
 			};
 			const currentTran = `transactions_${i}`;
 			const accountId = data[currentTran];
@@ -116,9 +117,8 @@ export class BtService extends AccountService {
 		for (let i = 0; i < balancesCount; i++) {
 			const account: IBankAccount = {
 				user_id: userId,
-				access_token: data.access_token,
-				refresh_token: data.refresh_token,
 				bank: EnumBanks.BT,
+				oauth_id: oauth.id,
 			};
 			const currentBalance = `balances_${i}`;
 			const accountId = data[currentBalance];
@@ -132,6 +132,11 @@ export class BtService extends AccountService {
 		}
 
 		const accArray = Object.values(accounts);
+
+		oauth.refresh_token = data.refresh_token;
+		oauth.access_token = data.access_token;
+		oauth.token_expires_at = moment().add(1, 'hour').toDate();
+		await this.updateOauthById(oauth, oauth.id);
 
 		await Promise.all(
 			accArray.map(async acc => {
@@ -153,36 +158,32 @@ export class BtService extends AccountService {
 		};
 
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-			});
-			const data = result.data;
-			await this.handleBTCallbackData(data, oauth.user_id);
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		});
+		const data = result.data;
+		await this.handleBTCallbackData(data, oauth);
 	}
 
 	async syncBTAccount(accountId: number): Promise<void> {
 		const account = await this.getAccountById(accountId);
-		if (moment(account.token_expires_at).isBefore(new Date())) {
+		const oauth = await this.getOauthByAccountId(accountId);
+		if (moment(oauth.token_expires_at).isBefore(new Date())) {
 			const token = await this.refreshBTOauthToken(account.id);
-			account.access_token = token;
+			oauth.access_token = token;
 		}
 
 		const ref = this.httpService.axiosRef;
 
 		try {
-
 			const result = await ref.get(this.BT_ACCOUNTS_URL, {
 				params: {
 					withBalance: !!account.balance_see,
 				},
 				headers: {
-					authorization: `Bearer ${account.access_token}`,
+					authorization: `Bearer ${oauth.access_token}`,
 					'x-request-id': v4(),
 					'consent-id': this.BT_CONSENT_ID,
 					'psu-ip-address': '86.126.212.101',
@@ -206,17 +207,16 @@ export class BtService extends AccountService {
 			await this.getBtTransactionsByAccount(accountId);
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 
 	async getBtTransactionsByAccount(accountId: number): Promise<void> {
 		const account = await this.getAccountById(accountId);
 		const ref = this.httpService.axiosRef;
-
+		const oauth = await this.getOauthByAccountId(accountId);
 		const params: any = {
 			bookingStatus: 'booked',
 		};
@@ -237,7 +237,7 @@ export class BtService extends AccountService {
 			const result = await ref.get(`${this.BT_ACCOUNTS_URL}/${account.account_id}/transactions`, {
 				params,
 				headers: {
-					authorization: `Bearer ${account.access_token}`,
+					authorization: `Bearer ${oauth.access_token}`,
 					'x-request-id': v4(),
 					'consent-id': this.BT_CONSENT_ID,
 					'psu-ip-address': '86.126.212.101',
@@ -262,17 +262,16 @@ export class BtService extends AccountService {
 			}, accountId);
 		} catch (err) {
 			if (err.response) {
-				console.log(err.response.data);
-			} else {
-				console.log(err);
+				throw new Error(err.response.data);
 			}
+			throw err;
 		}
 	}
 
 	async refreshBTOauthToken(accountId: number): Promise<string> {
-		const account = await this.getAccountById(accountId);
+		const oauth = await this.getOauthByAccountId(accountId);
 		const body = {
-			refresh_token: account.refresh_token,
+			refresh_token: oauth.refresh_token,
 			grant_type: 'refresh_token',
 			redirect_uri: `${this.UI_HOST}/addBTAccount`,
 			client_id: this.BT_CLIENT_ID,
@@ -280,20 +279,16 @@ export class BtService extends AccountService {
 		};
 
 		const axios = this.httpService.axiosRef;
-		try {
-			const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded',
-				},
-			});
-			const data = result.data;
-			const token = data.access_token;
-			account.access_token = token;
-			account.token_expires_at = moment().add(1, 'hour').toDate();
-			await this.updateBankAccountById(account, account.id);
-			return token;
-		} catch (err) {
-			console.log(err);
-		}
+		const result = await axios.post(this.BT_TOKEN_URL, stringify(body), {
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+		});
+		const data = result.data;
+		const token = data.access_token;
+		oauth.access_token = token;
+		oauth.token_expires_at = moment().add(1, 'hour').toDate();
+		await this.updateOauthById(oauth, oauth.id);
+		return token;
 	}
 }
