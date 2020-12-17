@@ -140,8 +140,6 @@ export class BtService extends AccountService {
 
 		await Promise.all(
 			accArray.map(async acc => {
-				console.log(acc);
-				console.log(oauth);
 				const newId = await this.insertBankAccount(acc);
 				await this.syncBTAccount(newId);
 			}));
