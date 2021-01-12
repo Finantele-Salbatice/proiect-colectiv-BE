@@ -137,4 +137,35 @@ export class AccountGateway extends Database {
 			values: [account, iban],
 		});
 	}
+
+	accountsSpending(userId: number): Promise<any> {
+		const sql = `
+      SELECT ${this.bankAccountTable}.id, ${this.bankAccountTable}.description, ${this.bankAccountTable}.bank, sum(case when transactions.amount > 0 and transactions.date_time > DATE_SUB(now(), INTERVAL 6 MONTH) then transactions.amount else 0 end) as spending FROM ${this.bankAccountTable}
+      LEFT JOIN transactions ON
+        ${this.bankAccountTable}.id = transactions.account_id
+      WHERE ${this.bankAccountTable}.user_id = ?
+      GROUP BY ${this.bankAccountTable}.id;
+    `;
+
+		return this.query({
+			sql,
+			values: [userId],
+		});
+	}
+
+	monthSpending(userId: number): Promise<any> {
+		const sql = `
+    SELECT CONCAT(YEAR(transactions.date_time), '/', MONTH(transactions.date_time)) as month, sum(case when transactions.amount > 0 then transactions.amount else 0 end) as spending FROM ${this.bankAccountTable}
+    LEFT JOIN transactions ON
+      ${this.bankAccountTable}.id = transactions.account_id
+    WHERE ${this.bankAccountTable}.user_id = ?
+    and transactions.date_time > DATE_SUB(now(), INTERVAL 6 MONTH)
+    GROUP BY YEAR(transactions.date_time), MONTH(transactions.date_time);
+  `;
+
+		return this.query({
+			sql,
+			values: [userId],
+		});
+	}
 }

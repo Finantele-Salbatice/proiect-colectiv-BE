@@ -76,5 +76,15 @@ export class AccountService {
 		const results = await this.gateway.getAccountsByUser(userId);
 		return results;
 	}
+
+	async accountsSpending(userId: number): Promise<any> {
+		const result: any = {
+		};
+		const spending = await this.gateway.accountsSpending(userId);
+		const months = await this.gateway.monthSpending(userId);
+		result.spending = spending;
+		result.months = months;
+		return result;
+	}
 }
 

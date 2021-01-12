@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { IAccountAdd } from 'src/requests/AccountAdd';
+import { AuthRequest } from 'src/requests/AuthRequest';
 import { IBCRCallback } from 'src/requests/BCRCallback';
 import { IBTCallback } from 'src/requests/BTCallback';
 import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
@@ -14,7 +15,7 @@ import { IBankAccount } from './models/Account';
 @Controller('account')
 export class AccountController {
 	constructor(private readonly service: AccountService, private readonly serviceBRD: BrdService,
-    private coordinator: AccountCoordinator, private btService: BtService, private bcrService: BcrService) {}
+		private coordinator: AccountCoordinator, private btService: BtService, private bcrService: BcrService) {}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('add')
@@ -43,9 +44,15 @@ export class AccountController {
 		await this.bcrService.syncBCRAccount(req.body.accountId);
 	}
 
-  @UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard)
 	@Post('list')
 	async accountsList(@Request() req: ISyncAccountRequest): Promise<IBankAccount[]> {
 		return this.service.getAllByUser(req.user.userId);
+	}
+
+	@UseGuards(JwtAuthGuard)
+	@Post('reports')
+	async accountsSpending(@Request() req: AuthRequest): Promise<IBankAccount[]> {
+		return this.service.accountsSpending(req.user.userId);
 	}
 }
