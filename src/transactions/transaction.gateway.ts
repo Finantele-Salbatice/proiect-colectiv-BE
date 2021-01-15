@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { Database } from 'src/system/database';
-import { ITransactionsListFilters } from 'src/requests/TransactionsListRequest';
+import { TransactionsListFilters } from 'src/requests/TransactionsListRequest';
 import * as moment from 'moment';
 import { ITransaction } from './models/Transactions';
 
@@ -22,7 +22,7 @@ export class TransactionGateway extends Database {
 		this.bankAccountsTable = 'bank_accounts';
 	}
 
-	getTransactionsWithFilters(userId: number, filters: ITransactionsListFilters): Promise<any> {
+	getTransactionsWithFilters(userId: number, filters: TransactionsListFilters): Promise<any> {
 		const querryBuilder = this.queryBuilder;
 		let sql = querryBuilder.columns('transactions.id','transactions.account_id','transactions.amount','transactions.transaction_id','transactions.details','transactions.currency','transactions.beneficiary','transactions.date_time','transactions.status')
 			.from(this.transactionsTable)
@@ -74,7 +74,7 @@ export class TransactionGateway extends Database {
 			sql:sql2,
 		});
 	}
-	getTransactionsCountWithFilters(userId: number, filters: ITransactionsListFilters): Promise<any> {
+	getTransactionsCountWithFilters(userId: number, filters: TransactionsListFilters): Promise<any> {
 		const querryBuilder = this.queryBuilder;
 		let sql = querryBuilder.columns()
 			.count('transactions.id', {

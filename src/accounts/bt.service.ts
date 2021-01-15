@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { v4 } from 'uuid';
 import { randomBytes } from 'crypto';
 import { AxiosRequestConfig } from 'axios';
-import { IBTCallback } from 'src/requests/BTCallback';
+import { BTCallback } from 'src/requests/BTCallback';
 import { ITransaction } from 'src/transactions/models/Transactions';
 import { IBankAccount } from './models/Account';
 import { IBTOauthResponse } from './models/BTOauth';
@@ -145,7 +145,7 @@ export class BtService extends AccountService {
 			}));
 	}
 
-	async handleBTCallback(request: IBTCallback): Promise<void> {
+	async handleBTCallback(request: BTCallback): Promise<void> {
 		const id = +request.state;
 		const oauth = await this.getOauthById(id);
 		const body = {

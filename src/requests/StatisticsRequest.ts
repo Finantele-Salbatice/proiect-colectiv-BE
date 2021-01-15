@@ -1,9 +1,6 @@
-import { AuthRequest } from './AuthRequest';
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface StatisticsRequest extends AuthRequest {
-  body: StatisticsRequestFilter;
-}
-
-export interface StatisticsRequestFilter {
+export class StatisticsRequestFilter {
+  @ApiProperty()
   lastDays: number;
 }

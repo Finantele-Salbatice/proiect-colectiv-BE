@@ -1,4 +1,5 @@
 import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ActivateAccountRequest } from 'src/requests/ActivateAccountRequest';
 import { AuthRequest } from 'src/requests/AuthRequest';
@@ -18,6 +19,7 @@ export class UserController {
 		return this.service.login(body.email, body.password);
 	}
 
+	@ApiBearerAuth()
 	@UseGuards(JwtAuthGuard)
 	@Post('info')
 	async info(@Request() req: AuthRequest): Promise<User> {

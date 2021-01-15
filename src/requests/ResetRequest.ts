@@ -1,4 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface ResetRequest{
+export class ResetRequest {
+    @ApiProperty()
     email: string;
 }

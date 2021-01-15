@@ -1,4 +1,3 @@
-
 export interface ITransaction {
   id?: number;
   transaction_id?: number;

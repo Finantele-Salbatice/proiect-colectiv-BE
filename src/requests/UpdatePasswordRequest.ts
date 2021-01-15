@@ -1,5 +1,9 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export interface UpdatePasswordRequest{
-    token: string;
-    password: string;
+export class UpdatePasswordRequest {
+  @ApiPropertyOptional()
+  token: string;
+
+  @ApiPropertyOptional()
+  password: string;
 }

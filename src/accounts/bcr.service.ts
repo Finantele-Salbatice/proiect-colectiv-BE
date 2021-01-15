@@ -4,7 +4,7 @@ import { AccountGateway } from './account.gateway';
 import { EnumBankAccountStatus, EnumBanks } from './models/Oauth';
 import { IBankAccount } from './models/Account';
 import { AxiosRequestConfig } from 'axios';
-import { IBCRCallback } from 'src/requests/BCRCallback';
+import { BCRCallback } from 'src/requests/BCRCallback';
 import { IOauth } from './models/Oauth';
 import { IBCROauthResponse } from './models/BCROauth';
 import * as moment from 'moment';
@@ -91,7 +91,7 @@ export class BcrService extends AccountService  {
 		return url;
 	}
 
-	async handleBCRCallback(request: IBCRCallback): Promise<void> {
+	async handleBCRCallback(request: BCRCallback): Promise<void> {
 		const id = +request.state;
 		const oauth = await this.getOauthById(id);
 		const parms = {

@@ -2,13 +2,13 @@ import { ITransaction } from './models/Transactions';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigProvider } from 'src/system/ConfigProvider';
 import { TransactionGateway } from './transaction.gateway';
-import { ITransactionsListFilters } from 'src/requests/TransactionsListRequest';
+import { TransactionsListFilters } from 'src/requests/TransactionsListRequest';
 
 @Injectable()
 export class TransactionService {
 	constructor(private gateway: TransactionGateway, private configProvider: ConfigProvider) {
 	}
-	async filterTransactions(filter: ITransactionsListFilters, userId: number): Promise<any> {
+	async filterTransactions(filter: TransactionsListFilters, userId: number): Promise<any> {
 		if (!userId) {
 			throw new NotFoundException('Invalid userId');
 		}

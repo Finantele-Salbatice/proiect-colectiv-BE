@@ -1,8 +1,9 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { EnumBanks } from 'src/accounts/models/Oauth';
-import { AuthRequest } from './AuthRequest';
 
-export interface IAccountAdd extends AuthRequest {
-  body: {
-    bank: EnumBanks;
-  }
+export class AccountAdd {
+	@ApiProperty({
+		enum: EnumBanks,
+	})
+	bank: EnumBanks;
 }

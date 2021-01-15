@@ -1,10 +1,11 @@
 import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { IAccountAdd } from 'src/requests/AccountAdd';
+import { AccountAdd } from 'src/requests/AccountAdd';
 import { AuthRequest } from 'src/requests/AuthRequest';
-import { IBCRCallback } from 'src/requests/BCRCallback';
-import { IBTCallback } from 'src/requests/BTCallback';
-import { ISyncAccountRequest } from 'src/requests/SyncBankAccountRequest';
+import { BCRCallback } from 'src/requests/BCRCallback';
+import { BTCallback } from 'src/requests/BTCallback';
+import { SyncAccountBody } from 'src/requests/SyncBankAccountRequest';
 import { AccountCoordinator } from './account.coordinator';
 import { AccountService } from './account.service';
 import { BcrService } from './bcr.service';
@@ -12,6 +13,7 @@ import { BrdService } from './brd.service';
 import { BtService } from './bt.service';
 import { IBankAccount } from './models/Account';
 
+@ApiBearerAuth()
 @Controller('account')
 export class AccountController {
 	constructor(private readonly service: AccountService, private readonly serviceBRD: BrdService,
@@ -19,34 +21,34 @@ export class AccountController {
 
 	@UseGuards(JwtAuthGuard)
 	@Post('add')
-	addAccount(@Request() req: IAccountAdd): Promise<string> {
-		return this.coordinator.addAcount(req.user.userId, req.body.bank);
+	addAccount(@Request() req: AuthRequest, @Body() body: AccountAdd): Promise<string> {
+		return this.coordinator.addAcount(req.user.userId, body.bank);
 	}
 
 	@Post('btcallback')
-	async btcallback(@Body() body: IBTCallback): Promise<void> {
+	async btcallback(@Body() body: BTCallback): Promise<void> {
 		await this.btService.handleBTCallback(body);
 	}
 	@Post('bcrcallback')
-	async bcrcallback(@Body() body: IBCRCallback): Promise<void> {
+	async bcrcallback(@Body() body: BCRCallback): Promise<void> {
 		await this.bcrService.handleBCRCallback(body);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('btsync')
-	async syncAccount(@Request() req: ISyncAccountRequest): Promise<void> {
-		await this.btService.syncBTAccount(req.body.accountId);
+	async syncAccount(@Body() body: SyncAccountBody): Promise<void> {
+		await this.btService.syncBTAccount(body.accountId);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('bcrsync')
-	async syncBCRAccount(@Request() req: ISyncAccountRequest): Promise<void> {
-		await this.bcrService.syncBCRAccount(req.body.accountId);
+	async syncBCRAccount(@Body() body: SyncAccountBody): Promise<void> {
+		await this.bcrService.syncBCRAccount(body.accountId);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@Post('list')
-	async accountsList(@Request() req: ISyncAccountRequest): Promise<IBankAccount[]> {
+	async accountsList(@Request() req: AuthRequest): Promise<IBankAccount[]> {
 		return this.service.getAllByUser(req.user.userId);
 	}
 

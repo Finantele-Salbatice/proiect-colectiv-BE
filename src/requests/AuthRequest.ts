@@ -1,10 +1,12 @@
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface AuthRequest {
+export class AuthRequest {
   user: {
     userId: number
   };
 }
-export interface BRDRequest {
+export class BRDRequest {
+  @ApiProperty()
   body: {
     userId: number
   };

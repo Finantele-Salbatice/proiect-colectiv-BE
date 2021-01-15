@@ -1,9 +1,6 @@
-import { AuthRequest } from './AuthRequest';
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface ISyncAccountRequest extends AuthRequest {
-  body: ISyncAccountBody;
-}
-
-export interface ISyncAccountBody {
+export class SyncAccountBody {
+  @ApiProperty()
   accountId: number;
 }

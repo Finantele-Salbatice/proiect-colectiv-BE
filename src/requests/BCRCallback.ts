@@ -1,5 +1,9 @@
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface IBCRCallback {
-    state: string;
-    code: string;
-  }
+export class BCRCallback {
+  @ApiProperty()
+  state: string;
+
+  @ApiProperty()
+  code: string;
+}
