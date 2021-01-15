@@ -42,7 +42,7 @@ export class BrdService extends AccountService {
 				'allPsd2': 'allAccounts',
 			},
 			recurringIndicator: true,
-			validUntil: '2020-12-31',
+			validUntil: '2021-02-27',
 			frequencyPerDay: 4,
 			combinedServiceIndicator: false,
 		},
