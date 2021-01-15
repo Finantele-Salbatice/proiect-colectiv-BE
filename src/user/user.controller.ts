@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { ActivateAccountRequest } from 'src/requests/ActivateAccountRequest';
@@ -21,7 +21,7 @@ export class UserController {
 
 	@ApiBearerAuth()
 	@UseGuards(JwtAuthGuard)
-	@Post('info')
+	@Get('info')
 	async info(@Request() req: AuthRequest): Promise<User> {
 		const { userId } = req.user;
 		const user = await this.service.findUserById(userId);
