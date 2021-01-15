@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { AccountAdd } from 'src/requests/AccountAdd';
@@ -47,13 +47,13 @@ export class AccountController {
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('list')
+	@Get('list')
 	async accountsList(@Request() req: AuthRequest): Promise<IBankAccount[]> {
 		return this.service.getAllByUser(req.user.userId);
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Post('reports')
+	@Get('reports')
 	async accountsSpending(@Request() req: AuthRequest): Promise<IBankAccount[]> {
 		return this.service.accountsSpending(req.user.userId);
 	}
