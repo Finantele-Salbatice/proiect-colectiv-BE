@@ -28,14 +28,14 @@ export class TransactionGateway extends Database {
 			.from(this.transactionsTable)
 			.leftJoin('bank_accounts', 'transactions.account_id', 'bank_accounts.id')
 			.where('bank_accounts.user_id',userId);
-		if (Number.isInteger(filters.amountAbove)) {
-			sql = sql.where('transactions.amount','>=',filters.amountAbove);
+		if (Number.isInteger(+filters.amountAbove)) {
+			sql = sql.where('transactions.amount','>=',+filters.amountAbove);
 		}
-		if (Number.isInteger(filters.amountBelow)) {
-			sql = sql.where('transactions.amount','<=',filters.amountBelow);
+		if (Number.isInteger(+filters.amountBelow)) {
+			sql = sql.where('transactions.amount','<=',+filters.amountBelow);
 		}
-		if (Number.isInteger(filters.accountId)) {
-			sql = sql.where('transactions.account_id',filters.accountId);
+		if (Number.isInteger(+filters.accountId)) {
+			sql = sql.where('transactions.account_id',+filters.accountId);
 		}
 		if (filters.from) {
 			const fr = moment(filters.from);
@@ -49,13 +49,13 @@ export class TransactionGateway extends Database {
 				sql = sql.where('transactions.date_time','<=',filters.to);
 			}
 		}
-		if (Number.isInteger(filters.limit) && filters.limit >= 0 ) {
-			sql = sql.limit(filters.limit);
+		if (Number.isInteger(+filters.limit) && +filters.limit >= 0 ) {
+			sql = sql.limit(+filters.limit);
 		} else {
 			sql = sql.limit(defaultLimit);
 		}
-		if (Number.isInteger(filters.skip) && filters.skip >= 0 ) {
-			sql = sql.offset(filters.skip);
+		if (Number.isInteger(+filters.skip) && +filters.skip >= 0 ) {
+			sql = sql.offset(+filters.skip);
 		} else {
 			sql = sql.offset(defaultSkip);
 		}
@@ -83,14 +83,14 @@ export class TransactionGateway extends Database {
 			.from(this.transactionsTable)
 			.leftJoin('bank_accounts', 'transactions.account_id', 'bank_accounts.id')
 			.where('bank_accounts.user_id',userId);
-		if (Number.isInteger(filters.amountAbove)) {
-			sql = sql.where('transactions.amount','>=',filters.amountAbove);
+		if (Number.isInteger(+filters.amountAbove)) {
+			sql = sql.where('transactions.amount','>=',+filters.amountAbove);
 		}
-		if (Number.isInteger(filters.amountBelow)) {
-			sql = sql.where('transactions.amount','<=',filters.amountBelow);
+		if (Number.isInteger(+filters.amountBelow)) {
+			sql = sql.where('transactions.amount','<=',+filters.amountBelow);
 		}
-		if (Number.isInteger(filters.accountId)) {
-			sql = sql.where('transactions.account_id',filters.accountId);
+		if (Number.isInteger(+filters.accountId)) {
+			sql = sql.where('transactions.account_id',+filters.accountId);
 		}
 		if (filters.from) {
 			const fr = moment(filters.from);
